@@ -2,10 +2,7 @@ package nl.buildtool.views
 
 import com.vaadin.flow.component.applayout.AppLayout
 import com.vaadin.flow.component.applayout.DrawerToggle
-import com.vaadin.flow.component.html.Footer
-import com.vaadin.flow.component.html.H1
-import com.vaadin.flow.component.html.Header
-import com.vaadin.flow.component.html.Span
+import com.vaadin.flow.component.html.*
 import com.vaadin.flow.component.orderedlayout.Scroller
 import com.vaadin.flow.component.sidenav.SideNav
 import com.vaadin.flow.component.sidenav.SideNavItem
@@ -34,7 +31,7 @@ class MainLayout : AppLayout() {
         toggle.setAriaLabel("Menu toggle")
 
         viewTitle = H1()
-        viewTitle!!.addClassNames(LumoUtility.FontSize.LARGE, LumoUtility.Margin.NONE)
+        viewTitle!!.addClassNames(LumoUtility.FontSize.XLARGE, LumoUtility.Margin.NONE)
 
         addToNavbar(true, toggle, viewTitle)
     }
@@ -42,15 +39,21 @@ class MainLayout : AppLayout() {
     private fun addDrawerContent() {
         val appName = Span("Rob's build-tool")
         appName.addClassNames(LumoUtility.FontWeight.SEMIBOLD, LumoUtility.FontSize.LARGE)
-        val header = Header(appName)
 
-        val scroller: Scroller = Scroller(createNavigation())
+        val headerDiv = Div()
+        headerDiv.add(appName)
+        headerDiv.addClassNames("padding-10")
+        // Test
+
+        val header = Header(headerDiv)
+
+        val scroller = Scroller(createNavigation())
 
         addToDrawer(header, scroller, createFooter())
     }
 
     private fun createNavigation(): SideNav {
-        val nav: SideNav = SideNav()
+        val nav = SideNav()
 
         nav.addItem(SideNavItem("Build", BuildView::class.java, LineAwesomeIcon.BUILDING.create()))
         nav.addItem(SideNavItem("Utils", UtilsView::class.java, LineAwesomeIcon.TOOLS_SOLID.create()))
