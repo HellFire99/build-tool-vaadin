@@ -18,13 +18,18 @@ import com.vaadin.flow.router.PageTitle
 import com.vaadin.flow.router.Route
 import com.vaadin.flow.router.RouteAlias
 import com.vaadin.flow.theme.lumo.LumoUtility
+import nl.buildtool.LoggingService
 import nl.buildtool.views.MainLayout
 
 @PageTitle("Build")
 @Menu(icon = "line-awesome/svg/pencil-ruler-solid.svg", order = 0.0)
 @Route(value = "", layout = MainLayout::class)
 @RouteAlias(value = "", layout = MainLayout::class)
-class BuildView(private val pomFileDataProvider: PomFileDataProvider) : Composite<VerticalLayout?>() {
+class BuildView(
+    pomFileDataProvider: PomFileDataProvider,
+    private val loggingService: LoggingService
+) : Composite<VerticalLayout?>() {
+    lateinit var textArea: TextArea
 
     init {
         val layoutRow = HorizontalLayout()
@@ -66,7 +71,7 @@ class BuildView(private val pomFileDataProvider: PomFileDataProvider) : Composit
         val pomManipulationRadioGroup = RadioButtonGroup<Any?>()
         pomManipulationRadioGroup.setId("radioGroup")
 
-        val textField2 = TextField()
+        val textFieldJiraNr = TextField()
         val buttonPrimary2 = Button()
         val layoutColumn6 = VerticalLayout()
         layoutColumn6.setId("layoutColumn6")
@@ -84,8 +89,8 @@ class BuildView(private val pomFileDataProvider: PomFileDataProvider) : Composit
         val layoutRow7 = HorizontalLayout()
         layoutRow7.setId("layoutRow7")
 
-        val textArea = TextArea()
-        textArea.setId("logTextArea")
+        setupTextArea()
+
         content?.addClassName(LumoUtility.Gap.XSMALL)
         content?.addClassName(LumoUtility.Padding.XSMALL)
         content?.width = "100%"
@@ -128,13 +133,14 @@ class BuildView(private val pomFileDataProvider: PomFileDataProvider) : Composit
 
         targetsChackbox.setItems("Clean", "Install", "Package", "Test", "Verify")
         targetsChackbox.addThemeVariants(CheckboxGroupVariant.LUMO_VERTICAL)
+        targetsChackbox.value = setOf("Clean", "Install")
         layoutColumn5.setHeightFull()
         layoutRow3.setFlexGrow(1.0, layoutColumn5)
         layoutColumn5.addClassName(LumoUtility.Gap.XSMALL)
         layoutColumn5.addClassName(LumoUtility.Padding.XSMALL)
         layoutColumn5.width = "100%"
         layoutColumn5.height = "min-content"
-        optionsCheckbox.label = "OptionsLabel"
+        optionsCheckbox.label = "Options"
         optionsCheckbox.width = "min-content"
 
         optionsCheckbox.setItems("git pull", "stop on error", "skip tests", "parallel")
@@ -149,9 +155,13 @@ class BuildView(private val pomFileDataProvider: PomFileDataProvider) : Composit
 
         pomManipulationRadioGroup.setItems("manual", "auto-detect")
         pomManipulationRadioGroup.addThemeVariants(RadioGroupVariant.LUMO_VERTICAL)
-        textField2.label = "JiraNr"
-        rightColumn.setAlignSelf(FlexComponent.Alignment.CENTER, textField2)
-        textField2.width = "100%"
+        pomManipulationRadioGroup.value = "auto-detect"
+
+        textFieldJiraNr.label = "JiraNr"
+        rightColumn.setAlignSelf(FlexComponent.Alignment.CENTER, textFieldJiraNr)
+        textFieldJiraNr.width = "100%"
+        textFieldJiraNr.isEnabled = false
+
         buttonPrimary2.text = "Update pom files"
         rightColumn.setAlignSelf(FlexComponent.Alignment.CENTER, buttonPrimary2)
         buttonPrimary2.width = "min-content"
@@ -186,20 +196,19 @@ class BuildView(private val pomFileDataProvider: PomFileDataProvider) : Composit
         buttonTertiary.text = "Refresh"
         buttonTertiary.width = "min-content"
         buttonTertiary.addThemeVariants(ButtonVariant.LUMO_TERTIARY)
-        buttonTertiary2.text = "Clean"
+        buttonTertiary2.text = "Clean log"
         layoutRow6.setAlignSelf(FlexComponent.Alignment.CENTER, buttonTertiary2)
         buttonTertiary2.width = "min-content"
         buttonTertiary2.addThemeVariants(ButtonVariant.LUMO_TERTIARY)
         layoutRow7.addClassName(LumoUtility.Gap.MEDIUM)
         layoutRow7.width = "100%"
         layoutRow7.height = "min-content"
-//        textArea.label = "Text area"
 
         layoutRow7.setAlignSelf(FlexComponent.Alignment.CENTER, textArea)
         textArea.style["flex-grow"] = "1"
         textArea.height = "100%"
 
-        val treeGrid = pomFileDataProvider.createTreeGrid(textArea)
+        val treeGrid = pomFileDataProvider.createTreeGrid()
         treeGrid.height = "100%"
         treeGrid.width = "100%"
 
@@ -218,7 +227,7 @@ class BuildView(private val pomFileDataProvider: PomFileDataProvider) : Composit
         rightColumn.add(hr)
         rightColumn.add(layoutRow4)
         layoutRow4.add(pomManipulationRadioGroup)
-        rightColumn.add(textField2)
+        rightColumn.add(textFieldJiraNr)
         rightColumn.add(buttonPrimary2)
         content?.add(layoutColumn6)
         layoutColumn6.add(layoutRow5)
@@ -229,6 +238,25 @@ class BuildView(private val pomFileDataProvider: PomFileDataProvider) : Composit
         layoutRow6.add(buttonTertiary2)
         content?.add(layoutRow7)
         layoutRow7.add(textArea)
+
+        // postInit
+        postInit()
+    }
+
+    private fun setupTextArea() {
+        this.textArea = TextArea()
+        textArea.setId("logTextArea")
+        textArea.setWidthFull()
+        textArea.minHeight = "100px"
+        textArea.maxHeight = "150px"
+        textArea.label = "Log"
+        textArea.placeholder = "<empty>"
+        textArea.isClearButtonVisible = true
+        textArea.isReadOnly = true
+    }
+
+    private fun postInit() {
+        loggingService.initialiseer(this.textArea)
     }
 
 //    private fun checkBoxDataProvicer(): CallbackDataProvider<*, *> {
