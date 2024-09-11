@@ -8,7 +8,6 @@ import com.vaadin.flow.data.provider.hierarchy.TreeDataProvider
 import nl.buildtool.model.Globals
 import nl.buildtool.model.PomFile
 import nl.buildtool.utils.DirectoryCrawler
-import nl.buildtool.utils.ExtensionFunctions.logEvent
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 
@@ -20,24 +19,19 @@ class PomFileDataProvider(private val directoryCrawler: DirectoryCrawler) {
 
     fun createTreeGrid(): TreeGrid<PomFile> {
         this.treeGrid = TreeGrid<PomFile>()
+        this.treeGrid.height = "100%"
+        this.treeGrid.width = "100%"
         this.dataProvider = dataProvider()
         treeGrid.setDataProvider(dataProvider)
-        treeGrid.addHierarchyColumn(PomFile::artifactId)
-            .setHeader("ArtifactId")
+        treeGrid.addHierarchyColumn(PomFile::artifactId).setHeader("ArtifactId")
         treeGrid.addColumn(PomFile::version).setHeader("Version")
         treeGrid.addColumn(PomFile::groupId).setHeader("GroupId")
-
         treeGrid.setSelectionMode(Grid.SelectionMode.MULTI)
 
         treeGrid.asMultiSelect().addValueChangeListener { event ->
-            updateSelection(event)
-            logEvent(
-                String.format(
-                    "Selection changed from %s to %s",
-                    event.oldValue, event.value
-                )
-            )
+            updateSelected(event)
         }
+        
         //Refresh
         dataProvider.refreshAll()
         return treeGrid
@@ -60,44 +54,63 @@ class PomFileDataProvider(private val directoryCrawler: DirectoryCrawler) {
         return TreeDataProvider(data)
     }
 
-    private fun updateSelection(event: AbstractField.ComponentValueChangeEvent<Grid<PomFile>, MutableSet<PomFile>>?) {
+    private fun updateSelected(event: AbstractField.ComponentValueChangeEvent<Grid<PomFile>, MutableSet<PomFile>>?) {
         event?.let {
-            updateSelection(event.value)
+            if (event.value.size > event.oldValue.size) {
+                // Items aangevinkt
+                updateSelected(event.value)
+            } else if (event.value.size < event.oldValue.size) {
+                updateDeselected(event)
+            }
         }
+        dataProvider.refreshAll()
+
+        val alleGlobalPoms = Globals.pomFileList + Globals.pomFileList.flatMap { it.modulePoms.values }
+        logger.info("Globals selection: " + alleGlobalPoms.filter { it.checked }
+            .joinToString { it.artifactId })
     }
 
-    fun updateSelection(pomfileSelection: MutableSet<PomFile>) {
-        if (pomfileSelection.isEmpty()) {
-            // Deselect all
-            Globals.pomFileList.forEach { it.checked = false }
-        } else {
+    fun updateSelected(pomfileSelection: MutableSet<PomFile>) {
+        if (pomfileSelection.isNotEmpty()) {
             // select selection
-//            this.treeGrid.getSelectionModel().deselectAll()
-            Globals.pomFileList.forEach { it.checked = false }
-            Globals.pomFileList.filter { it.modulePoms.isNotEmpty() }.forEach {
-                it.modulePoms.values.forEach { modulePom ->
-                    modulePom.checked = false
-                }
-            }
-
             pomfileSelection.forEach {
-                it.checked = true
-            }
-
-            Globals.pomFileList.filter { it.checked }.forEach {
-                if (it.modulePoms.isNotEmpty()) {
-                    it.modulePoms.values.forEach { modulePom ->
-                        modulePom.checked = true
-                        this.treeGrid.getSelectionModel().select(modulePom)
+                val alleGlobalPoms = Globals.pomFileList + Globals.pomFileList.flatMap { it.modulePoms.values }
+                val globalPomFile = alleGlobalPoms.firstOrNull { pomFile -> pomFile.artifactId == it.artifactId }
+                globalPomFile?.checked = true
+                if (globalPomFile?.modulePoms?.isNotEmpty() == true) {
+                    // Select children in treeGrid
+                    globalPomFile.modulePoms.values.forEach { pomFile ->
+                        this.treeGrid.getSelectionModel().select(pomFile)
                     }
                 }
             }
-            this.dataProvider.refreshAll()
-
-            logger.info("Globals.pomFileList selection: " + Globals.pomFileList.filter { it.checked }
-                .joinToString { it.artifactId })
-            logger.info("pomfileSelection selection: " + pomfileSelection.filter { it.checked }
-                .joinToString { it.artifactId })
         }
+    }
+
+    fun updateDeselected(event: AbstractField.ComponentValueChangeEvent<Grid<PomFile>, MutableSet<PomFile>>?) {
+        // Items uitgevinkt
+        event?.let {
+            val values = event.value.toSet()
+            val oldValues = event.oldValue.toSet().toMutableSet()
+            oldValues.removeAll(values)
+            logger.info("Deselected items: ${oldValues.joinToString { it.artifactId }}")
+
+            oldValues.forEach { oldValuePomFile ->
+                val alleGlobalPoms = Globals.pomFileList + Globals.pomFileList.flatMap { it.modulePoms.values }
+                val globalPomFile =
+                    alleGlobalPoms.firstOrNull { pomFile -> pomFile.artifactId == oldValuePomFile.artifactId }
+                globalPomFile?.checked = false
+
+                // Deselect children
+                if (globalPomFile?.modulePoms?.isNotEmpty() == true) {
+                    // Select children in treeGrid
+                    globalPomFile.modulePoms.values.forEach { pomFile ->
+                        this.treeGrid.getSelectionModel().deselect(pomFile)
+                    }
+                }
+            }
+
+        }
+
     }
 }

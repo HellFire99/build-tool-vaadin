@@ -19,6 +19,7 @@ import com.vaadin.flow.router.Route
 import com.vaadin.flow.router.RouteAlias
 import com.vaadin.flow.theme.lumo.LumoUtility
 import nl.buildtool.LoggingService
+import nl.buildtool.utils.ExtensionFunctions.logEvent
 import nl.buildtool.views.MainLayout
 
 @PageTitle("Build")
@@ -37,8 +38,11 @@ class BuildView(
 
         val textField = TextField()
         textField.setId("filterTextField")
-        val buttonPrimary = Button()
-        buttonPrimary.setId("clearFilterButton")
+        val buttonClearFilter = Button("X")
+        buttonClearFilter.setId("buttonClearFilter")
+        buttonClearFilter.addClickListener {
+            logEvent("clearFilterButton clicked")
+        }
 
         val layoutRow2 = HorizontalLayout()
         layoutRow2.setId("layoutRow2")
@@ -72,20 +76,33 @@ class BuildView(
         pomManipulationRadioGroup.setId("radioGroup")
 
         val textFieldJiraNr = TextField()
-        val buttonPrimary2 = Button()
+        val buttonUpdatePomFiles = Button("Update pom files")
+        buttonUpdatePomFiles.setId("buttonUpdatePomFiles")
+        buttonUpdatePomFiles.addClickListener {
+            logEvent("buttonUpdatePomFiles clicked")
+        }
         val layoutColumn6 = VerticalLayout()
         layoutColumn6.setId("layoutColumn6")
 
         val layoutRow5 = HorizontalLayout()
         layoutRow5.setId("layoutRow5")
 
-        val buttonPrimary3 = Button()
-        val buttonSecondary = Button()
+        val buttonBuild = Button("Build")
+        val buttonCancel = Button("Cancel")
         val layoutRow6 = HorizontalLayout()
         layoutRow6.setId("layoutRow6")
 
-        val buttonTertiary = Button()
-        val buttonTertiary2 = Button()
+        val buttonRefresh = Button("Refresh")
+        buttonRefresh.setId("buttonRefresh")
+        buttonRefresh.addClickListener {
+            logEvent("buttonRefresh clicked")
+        }
+
+        val buttonCleanLog = Button("Clean log")
+        buttonCleanLog.setId("buttonCleanLog")
+        buttonCleanLog.addClickListener {
+            logEvent("buttonCleanLog clicked")
+        }
         val layoutRow7 = HorizontalLayout()
         layoutRow7.setId("layoutRow7")
 
@@ -101,11 +118,10 @@ class BuildView(
         textField.label = "Maven projects"
         layoutRow.setAlignSelf(FlexComponent.Alignment.START, textField)
         textField.width = "500px"
-        buttonPrimary.text = "X"
-        layoutRow.setAlignSelf(FlexComponent.Alignment.END, buttonPrimary)
-        buttonPrimary.width = "min-content"
-        buttonPrimary.maxWidth = "20px"
-        buttonPrimary.addThemeVariants(ButtonVariant.LUMO_PRIMARY)
+        layoutRow.setAlignSelf(FlexComponent.Alignment.END, buttonClearFilter)
+        buttonClearFilter.width = "min-content"
+        buttonClearFilter.maxWidth = "20px"
+        buttonClearFilter.addThemeVariants(ButtonVariant.LUMO_PRIMARY)
         layoutRow2.addClassName(LumoUtility.Gap.MEDIUM)
         layoutRow2.width = "100%"
         layoutRow2.style.set("flex-grow", "1")
@@ -162,10 +178,9 @@ class BuildView(
         textFieldJiraNr.width = "100%"
         textFieldJiraNr.isEnabled = false
 
-        buttonPrimary2.text = "Update pom files"
-        rightColumn.setAlignSelf(FlexComponent.Alignment.CENTER, buttonPrimary2)
-        buttonPrimary2.width = "min-content"
-        buttonPrimary2.addThemeVariants(ButtonVariant.LUMO_PRIMARY)
+        rightColumn.setAlignSelf(FlexComponent.Alignment.CENTER, buttonUpdatePomFiles)
+        buttonUpdatePomFiles.width = "min-content"
+        buttonUpdatePomFiles.addThemeVariants(ButtonVariant.LUMO_PRIMARY)
         layoutColumn6.setWidthFull()
         content?.setFlexGrow(1.0, layoutColumn6)
         layoutColumn6.addClassName(LumoUtility.Gap.XSMALL)
@@ -178,13 +193,21 @@ class BuildView(
         layoutRow5.addClassName(LumoUtility.Padding.XSMALL)
         layoutRow5.width = "100%"
         layoutRow5.height = "min-content"
-        buttonPrimary3.text = "Build"
-        layoutRow5.setAlignSelf(FlexComponent.Alignment.CENTER, buttonPrimary3)
-        buttonPrimary3.width = "min-content"
-        buttonPrimary3.addThemeVariants(ButtonVariant.LUMO_PRIMARY)
-        buttonSecondary.text = "Cancel"
-        layoutRow5.setAlignSelf(FlexComponent.Alignment.CENTER, buttonSecondary)
-        buttonSecondary.width = "min-content"
+
+        buttonBuild.setId("buttonBuild")
+        buttonBuild.addClickListener {
+            logEvent("buttonBuild clicked")
+        }
+        layoutRow5.setAlignSelf(FlexComponent.Alignment.CENTER, buttonBuild)
+        buttonBuild.width = "min-content"
+        buttonBuild.addThemeVariants(ButtonVariant.LUMO_PRIMARY)
+        buttonCancel.setId("buttonCancel")
+        buttonCancel.addClickListener {
+            logEvent("buttonCancel clicked")
+        }
+
+        layoutRow5.setAlignSelf(FlexComponent.Alignment.CENTER, buttonCancel)
+        buttonCancel.width = "min-content"
         layoutRow6.setHeightFull()
         layoutRow5.setFlexGrow(1.0, layoutRow6)
         layoutRow6.addClassName(LumoUtility.Gap.XSMALL)
@@ -193,13 +216,11 @@ class BuildView(
         layoutRow6.height = "min-content"
         layoutRow6.alignItems = FlexComponent.Alignment.CENTER
         layoutRow6.justifyContentMode = FlexComponent.JustifyContentMode.END
-        buttonTertiary.text = "Refresh"
-        buttonTertiary.width = "min-content"
-        buttonTertiary.addThemeVariants(ButtonVariant.LUMO_TERTIARY)
-        buttonTertiary2.text = "Clean log"
-        layoutRow6.setAlignSelf(FlexComponent.Alignment.CENTER, buttonTertiary2)
-        buttonTertiary2.width = "min-content"
-        buttonTertiary2.addThemeVariants(ButtonVariant.LUMO_TERTIARY)
+        buttonRefresh.width = "min-content"
+        buttonRefresh.addThemeVariants(ButtonVariant.LUMO_TERTIARY)
+        layoutRow6.setAlignSelf(FlexComponent.Alignment.CENTER, buttonCleanLog)
+        buttonCleanLog.width = "min-content"
+        buttonCleanLog.addThemeVariants(ButtonVariant.LUMO_TERTIARY)
         layoutRow7.addClassName(LumoUtility.Gap.MEDIUM)
         layoutRow7.width = "100%"
         layoutRow7.height = "min-content"
@@ -209,12 +230,10 @@ class BuildView(
         textArea.height = "100%"
 
         val treeGrid = pomFileDataProvider.createTreeGrid()
-        treeGrid.height = "100%"
-        treeGrid.width = "100%"
 
         content?.add(layoutRow)
         layoutRow.add(textField)
-        layoutRow.add(buttonPrimary)
+        layoutRow.add(buttonClearFilter)
         content?.add(layoutRow2)
         layoutRow2.add(leftColumn)
         leftColumn.add(treeGrid)
@@ -228,14 +247,14 @@ class BuildView(
         rightColumn.add(layoutRow4)
         layoutRow4.add(pomManipulationRadioGroup)
         rightColumn.add(textFieldJiraNr)
-        rightColumn.add(buttonPrimary2)
+        rightColumn.add(buttonUpdatePomFiles)
         content?.add(layoutColumn6)
         layoutColumn6.add(layoutRow5)
-        layoutRow5.add(buttonPrimary3)
-        layoutRow5.add(buttonSecondary)
+        layoutRow5.add(buttonBuild)
+        layoutRow5.add(buttonCancel)
         layoutRow5.add(layoutRow6)
-        layoutRow6.add(buttonTertiary)
-        layoutRow6.add(buttonTertiary2)
+        layoutRow6.add(buttonRefresh)
+        layoutRow6.add(buttonCleanLog)
         content?.add(layoutRow7)
         layoutRow7.add(textArea)
 
