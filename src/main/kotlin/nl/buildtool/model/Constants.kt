@@ -56,6 +56,11 @@ const val showSelectedId = "showSelectedToggle"
 const val timeoutAmount: Long = 60
 val timeoutUnit: TimeUnit = TimeUnit.SECONDS
 
+const val RADIO_VALUE_ALL_IN_WORSPACE = "All in workspace"
+const val RADIO_VALUE_SELECTION = "Selection"
+const val RADIO_VALUE_AUTO_DETECT = "Auto-detect"
+const val RADIO_VALUE_CUSTOM_PREFIX = "Custom prefix"
+
 enum class GitCommand(val command: String) {
     SHOW_CURRENT_BRANCH("git branch --show-current"),
     PULL("git pull")

@@ -31,14 +31,16 @@ class PomFileDataProvider(private val directoryCrawler: DirectoryCrawler) {
         treeGrid.asMultiSelect().addValueChangeListener { event ->
             updateSelected(event)
         }
-        
+
         //Refresh
         dataProvider.refreshAll()
         return treeGrid
     }
 
     fun dataProvider(): TreeDataProvider<PomFile?> {
-        Globals.pomFileList = directoryCrawler.getPomFileList()
+        if (Globals.pomFileList.isEmpty()) {
+            Globals.pomFileList = directoryCrawler.getPomFileList()
+        }
         val pomFiles = Globals.pomFileList
         val data = TreeData<PomFile?>()
 

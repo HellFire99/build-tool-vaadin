@@ -12,6 +12,7 @@ import com.vaadin.flow.router.PageTitle
 import com.vaadin.flow.router.Route
 import com.vaadin.flow.theme.lumo.LumoUtility
 import nl.buildtool.views.MainLayout
+import org.slf4j.LoggerFactory
 
 @PageTitle("Utils")
 @Menu(icon = "line-awesome/svg/pencil-ruler-solid.svg", order = 0.0)
@@ -19,7 +20,8 @@ import nl.buildtool.views.MainLayout
 @Uses(
     Icon::class
 )
-class UtilsView(prefixPomFilesUtilsView: PrefixPomFilesUtilsView) : Composite<VerticalLayout?>() {
+class UtilsView(utilsViewContent: UtilsViewContent) : Composite<VerticalLayout?>() {
+    private val logger = LoggerFactory.getLogger(UtilsView::class.java)
 
     init {
         val footerRow = HorizontalLayout()
@@ -31,9 +33,12 @@ class UtilsView(prefixPomFilesUtilsView: PrefixPomFilesUtilsView) : Composite<Ve
         val executeButton = Button("Execute")
         executeButton.setId("executeButton")
         executeButton.style["flex-grow"] = "1"
+        executeButton.addClickListener {
+            logger.info("executeButton")
+        }
         executeButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY)
 
-        prefixPomFilesUtilsView.addMainRowToContent(this)
+        utilsViewContent.initContent(this)
         footerRow.add(executeButton)
         content!!.add(footerRow)
     }
