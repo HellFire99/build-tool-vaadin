@@ -5,12 +5,9 @@ import com.vaadin.flow.component.button.Button
 import com.vaadin.flow.component.button.ButtonVariant
 import com.vaadin.flow.component.checkbox.CheckboxGroup
 import com.vaadin.flow.component.checkbox.CheckboxGroupVariant
-import com.vaadin.flow.component.html.Hr
 import com.vaadin.flow.component.orderedlayout.FlexComponent
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout
 import com.vaadin.flow.component.orderedlayout.VerticalLayout
-import com.vaadin.flow.component.radiobutton.RadioButtonGroup
-import com.vaadin.flow.component.radiobutton.RadioGroupVariant
 import com.vaadin.flow.component.textfield.TextArea
 import com.vaadin.flow.component.textfield.TextField
 import com.vaadin.flow.router.Menu
@@ -68,19 +65,8 @@ class BuildView(
         val optionsCheckbox = CheckboxGroup<Any?>()
         optionsCheckbox.setId("checkboxGroup2")
 
-        val hr = Hr()
-        val layoutRow4 = HorizontalLayout()
         optionsCheckbox.setId("layoutRow4")
 
-        val pomManipulationRadioGroup = RadioButtonGroup<Any?>()
-        pomManipulationRadioGroup.setId("radioGroup")
-
-        val textFieldJiraNr = TextField()
-        val buttonUpdatePomFiles = Button("Update pom files")
-        buttonUpdatePomFiles.setId("buttonUpdatePomFiles")
-        buttonUpdatePomFiles.addClickListener {
-            logEvent("buttonUpdatePomFiles clicked")
-        }
         val layoutColumn6 = VerticalLayout()
         layoutColumn6.setId("layoutColumn6")
 
@@ -108,8 +94,6 @@ class BuildView(
 
         setupTextArea()
 
-        content?.addClassName(LumoUtility.Gap.XSMALL)
-        content?.addClassName(LumoUtility.Padding.XSMALL)
         content?.width = "100%"
         content?.style?.set("flex-grow", "1")
         layoutRow.addClassName(LumoUtility.Gap.MEDIUM)
@@ -122,12 +106,15 @@ class BuildView(
         buttonClearFilter.width = "min-content"
         buttonClearFilter.maxWidth = "20px"
         buttonClearFilter.addThemeVariants(ButtonVariant.LUMO_PRIMARY)
-        layoutRow2.addClassName(LumoUtility.Gap.MEDIUM)
+        layoutRow2.addClassName(LumoUtility.Gap.XSMALL)
         layoutRow2.width = "100%"
+        layoutRow2.minHeight = "490px"
         layoutRow2.style.set("flex-grow", "1")
+
         leftColumn.addClassName(LumoUtility.Padding.XSMALL)
         leftColumn.width = "100%"
         leftColumn.style.set("flex-grow", "1")
+        leftColumn.style.set("padding-left", "0")
         rightColumn.addClassName(LumoUtility.Gap.XSMALL)
         rightColumn.addClassName(LumoUtility.Padding.XSMALL)
         rightColumn.style.set("flex-grow", "1")
@@ -161,32 +148,15 @@ class BuildView(
 
         optionsCheckbox.setItems("git pull", "stop on error", "skip tests", "parallel")
         optionsCheckbox.addThemeVariants(CheckboxGroupVariant.LUMO_VERTICAL)
-        layoutRow4.setWidthFull()
-        rightColumn.setFlexGrow(1.0, layoutRow4)
-        layoutRow4.addClassName(LumoUtility.Gap.MEDIUM)
-        layoutRow4.width = "100%"
-        layoutRow4.style.set("flex-grow", "1")
-        pomManipulationRadioGroup.label = "Pom manipulation"
-        pomManipulationRadioGroup.style.set("flex-grow", "1")
 
-        pomManipulationRadioGroup.setItems("manual", "auto-detect")
-        pomManipulationRadioGroup.addThemeVariants(RadioGroupVariant.LUMO_VERTICAL)
-        pomManipulationRadioGroup.value = "auto-detect"
-
-        textFieldJiraNr.label = "JiraNr"
-        rightColumn.setAlignSelf(FlexComponent.Alignment.CENTER, textFieldJiraNr)
-        textFieldJiraNr.width = "100%"
-        textFieldJiraNr.isEnabled = false
-
-        rightColumn.setAlignSelf(FlexComponent.Alignment.CENTER, buttonUpdatePomFiles)
-        buttonUpdatePomFiles.width = "min-content"
-        buttonUpdatePomFiles.addThemeVariants(ButtonVariant.LUMO_PRIMARY)
         layoutColumn6.setWidthFull()
         content?.setFlexGrow(1.0, layoutColumn6)
         layoutColumn6.addClassName(LumoUtility.Gap.XSMALL)
         layoutColumn6.addClassName(LumoUtility.Padding.XSMALL)
         layoutColumn6.width = "100%"
         layoutColumn6.height = "min-content"
+        layoutColumn6.style.set("padding-top", "0")
+        layoutColumn6.style.set("padding-bottom", "0")
         layoutRow5.setWidthFull()
         layoutColumn6.setFlexGrow(1.0, layoutRow5)
         layoutRow5.addClassName(LumoUtility.Gap.XSMALL)
@@ -243,11 +213,6 @@ class BuildView(
         layoutColumn4.add(targetsChackbox)
         layoutRow3.add(layoutColumn5)
         layoutColumn5.add(optionsCheckbox)
-        rightColumn.add(hr)
-        rightColumn.add(layoutRow4)
-        layoutRow4.add(pomManipulationRadioGroup)
-        rightColumn.add(textFieldJiraNr)
-        rightColumn.add(buttonUpdatePomFiles)
         content?.add(layoutColumn6)
         layoutColumn6.add(layoutRow5)
         layoutRow5.add(buttonBuild)
