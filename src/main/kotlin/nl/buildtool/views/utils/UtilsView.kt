@@ -26,11 +26,28 @@ import nl.buildtool.views.build.PomFileDataProvider
     Icon::class
 )
 class UtilsView(
-    pomFileDataProvider: PomFileDataProvider,
+    private val pomFileDataProvider: PomFileDataProvider,
     private val loggingService: LoggingService
 ) : Composite<VerticalLayout?>() {
 
     init {
+        val footerRow = HorizontalLayout()
+        footerRow.setId("footerRow")
+        footerRow.addClassName(LumoUtility.Gap.MEDIUM)
+        footerRow.width = "100%"
+        footerRow.height = "min-content"
+
+        val executeButton = Button("Execute")
+        executeButton.setId("executeButton")
+        executeButton.style["flex-grow"] = "1"
+        executeButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY)
+
+        addMainRowToContent()
+        footerRow.add(executeButton)
+        content!!.add(footerRow)
+    }
+
+    private fun addMainRowToContent() {
         val mainRow = HorizontalLayout()
         mainRow.setId("mainRow")
 
@@ -51,17 +68,19 @@ class UtilsView(
         middleColumn.setId("middleColumn")
 
         val pomFileSelectRadio = RadioButtonGroup<String>()
+        pomFileSelectRadio.setId("pomFileSelectRadio")
+
         val customOrAutoDetectPrefixRadio = RadioButtonGroup<String>()
-        val textField = TextField()
+        customOrAutoDetectPrefixRadio.setId("customOrAutoDetectPrefixRadio")
+
+        val customPrefixTextfield = TextField()
+        customPrefixTextfield.setId("customPrefixTextfield")
+
         val rightColumn = VerticalLayout()
         rightColumn.setId("rightColumn")
 
         val treeGrid = pomFileDataProvider.createTreeGrid()
 
-        val footerRow = HorizontalLayout()
-        footerRow.setId("footerRow")
-
-        val executeButton = Button()
         content!!.addClassName(LumoUtility.Gap.XSMALL)
         content!!.addClassName(LumoUtility.Padding.XSMALL)
         content!!.width = "100%"
@@ -103,8 +122,8 @@ class UtilsView(
         customOrAutoDetectPrefixRadio.width = "min-content"
         customOrAutoDetectPrefixRadio.setItems("Auto-detect", "Custom prefix")
         customOrAutoDetectPrefixRadio.addThemeVariants(RadioGroupVariant.LUMO_VERTICAL)
-        textField.label = "Prefix"
-        textField.width = "100%"
+        customPrefixTextfield.label = "Prefix"
+        customPrefixTextfield.width = "100%"
         rightColumn.setHeightFull()
         innerRow.setFlexGrow(1.0, rightColumn)
         rightColumn.addClassName(LumoUtility.Gap.XSMALL)
@@ -112,12 +131,6 @@ class UtilsView(
         rightColumn.width = "100%"
         rightColumn.style["flex-grow"] = "1"
 
-        footerRow.addClassName(LumoUtility.Gap.MEDIUM)
-        footerRow.width = "100%"
-        footerRow.height = "min-content"
-        executeButton.text = "Execute"
-        executeButton.style["flex-grow"] = "1"
-        executeButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY)
         content!!.add(mainRow)
         mainRow.add(leftColumn)
         leftColumn.add(prefixPomsButton)
@@ -128,18 +141,8 @@ class UtilsView(
         innerRow.add(middleColumn)
         middleColumn.add(pomFileSelectRadio)
         middleColumn.add(customOrAutoDetectPrefixRadio)
-        middleColumn.add(textField)
+        middleColumn.add(customPrefixTextfield)
         innerRow.add(rightColumn)
         rightColumn.add(treeGrid)
-        content!!.add(footerRow)
-        footerRow.add(executeButton)
-    }
-
-    private fun addMainRowToContent() {
-        val mainRow = HorizontalLayout()
-        mainRow.setId("mainRow")
-        mainRow.addClassName(LumoUtility.Gap.XSMALL)
-        mainRow.width = "100%"
-        mainRow.style["flex-grow"] = "1"
     }
 }
