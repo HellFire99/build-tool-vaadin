@@ -2,13 +2,13 @@ package nl.buildtool.views.utils
 
 import com.vaadin.flow.component.button.Button
 import com.vaadin.flow.component.button.ButtonVariant
-import com.vaadin.flow.component.grid.Grid
 import com.vaadin.flow.component.html.H4
 import com.vaadin.flow.component.html.H5
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout
 import com.vaadin.flow.component.orderedlayout.VerticalLayout
 import com.vaadin.flow.component.radiobutton.RadioButtonGroup
 import com.vaadin.flow.component.radiobutton.RadioGroupVariant
+import com.vaadin.flow.component.textfield.TextArea
 import com.vaadin.flow.component.textfield.TextField
 import com.vaadin.flow.theme.lumo.LumoUtility
 import nl.buildtool.model.RADIO_VALUE_ALL_IN_WORSPACE
@@ -65,6 +65,18 @@ class UtilsViewContent(private val pomFileDataProvider: PomFileDataProvider) {
 
         val customPrefixTextfield = TextField()
         customPrefixTextfield.setId("customPrefixTextfield")
+        customPrefixTextfield.label = "Prefix"
+        customPrefixTextfield.width = "100%"
+
+        val autoDetectInfo = TextArea()
+        autoDetectInfo.setId("autoDetectInfo")
+        autoDetectInfo.isReadOnly = true
+        autoDetectInfo.label = "Auto-detect branch names"
+        autoDetectInfo.width = "100%"
+        autoDetectInfo.value =
+            "Auto-detect branch names based on the GIT branch name. If a PSHV prefix exists in the branch name then this " +
+                    "is used as a POM version prefix"
+        autoDetectInfo.setWidthFull()
 
         val rightColumn = VerticalLayout()
         rightColumn.setId("rightColumn")
@@ -108,9 +120,10 @@ class UtilsViewContent(private val pomFileDataProvider: PomFileDataProvider) {
         pomFileSelectRadio.setItems(RADIO_VALUE_ALL_IN_WORSPACE, RADIO_VALUE_SELECTION)
         pomFileSelectRadio.addThemeVariants(RadioGroupVariant.LUMO_VERTICAL)
         pomFileSelectRadio.addValueChangeListener {
-            if (it.value == RADIO_VALUE_ALL_IN_WORSPACE) {
-//                treeGrid.setSelectionMode(Grid.SelectionMode.NONE)
-                
+            if (it.value == RADIO_VALUE_SELECTION) {
+                rightColumn.add(treeGrid)
+            } else if (it.value == RADIO_VALUE_ALL_IN_WORSPACE) {
+                rightColumn.remove(treeGrid)
             }
         }
 
@@ -118,8 +131,17 @@ class UtilsViewContent(private val pomFileDataProvider: PomFileDataProvider) {
         customOrAutoDetectPrefixRadio.width = "min-content"
         customOrAutoDetectPrefixRadio.setItems(RADIO_VALUE_AUTO_DETECT, RADIO_VALUE_CUSTOM_PREFIX)
         customOrAutoDetectPrefixRadio.addThemeVariants(RadioGroupVariant.LUMO_VERTICAL)
-        customPrefixTextfield.label = "Prefix"
-        customPrefixTextfield.width = "100%"
+        customOrAutoDetectPrefixRadio.addValueChangeListener {
+            if (it.value == RADIO_VALUE_AUTO_DETECT) {
+                customPrefixTextfield.value = ""
+                middleColumn.remove(customPrefixTextfield)
+                middleColumn.add(autoDetectInfo)
+            } else if (it.value == RADIO_VALUE_CUSTOM_PREFIX) {
+                middleColumn.remove(autoDetectInfo)
+                middleColumn.add(customPrefixTextfield)
+            }
+        }
+
         rightColumn.setHeightFull()
 
         contentRowPrefixPomFiles.setFlexGrow(1.0, rightColumn)
@@ -138,11 +160,9 @@ class UtilsViewContent(private val pomFileDataProvider: PomFileDataProvider) {
 
         middleColumn.add(pomFileSelectRadio)
         middleColumn.add(customOrAutoDetectPrefixRadio)
-        middleColumn.add(customPrefixTextfield)
-        contentRowPrefixPomFiles.add(middleColumn)
 
+        contentRowPrefixPomFiles.add(middleColumn)
         contentRowPrefixPomFiles.add(rightColumn)
-        rightColumn.add(treeGrid)
 
         utilsView.content!!.add(mainRow)
     }
