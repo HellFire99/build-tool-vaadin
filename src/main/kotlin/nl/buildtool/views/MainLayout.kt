@@ -10,7 +10,6 @@ import com.vaadin.flow.router.PageTitle
 import com.vaadin.flow.theme.lumo.LumoUtility
 import nl.buildtool.views.about.AboutView
 import nl.buildtool.views.build.BuildView
-import nl.buildtool.views.dependencies.DependenciesView
 import nl.buildtool.views.utils.UtilsView
 import org.vaadin.lineawesome.LineAwesomeIcon
 
@@ -57,7 +56,6 @@ class MainLayout : AppLayout() {
 
         nav.addItem(SideNavItem("Build", BuildView::class.java, LineAwesomeIcon.BUILDING.create()))
         nav.addItem(SideNavItem("Utils", UtilsView::class.java, LineAwesomeIcon.TOOLS_SOLID.create()))
-        nav.addItem(SideNavItem("Dependencies", DependenciesView::class.java, LineAwesomeIcon.CODEPEN.create()))
         nav.addItem(SideNavItem("About", AboutView::class.java, LineAwesomeIcon.FILE.create()))
 
         return nav
