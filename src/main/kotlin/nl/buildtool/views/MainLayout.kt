@@ -10,6 +10,7 @@ import com.vaadin.flow.router.PageTitle
 import com.vaadin.flow.theme.lumo.LumoUtility
 import nl.buildtool.views.about.AboutView
 import nl.buildtool.views.build.BuildView
+import nl.buildtool.views.settings.SettingsView
 import nl.buildtool.views.utils.UtilsView
 import org.vaadin.lineawesome.LineAwesomeIcon
 
@@ -36,7 +37,7 @@ class MainLayout : AppLayout() {
     }
 
     private fun addDrawerContent() {
-        val appName = Span("Rob's build-tool")
+        val appName = H3("Rob's build-tool")
         appName.addClassNames(LumoUtility.FontWeight.SEMIBOLD, LumoUtility.FontSize.LARGE)
 
         val headerDiv = Div()
@@ -57,6 +58,7 @@ class MainLayout : AppLayout() {
         nav.addItem(SideNavItem("Build", BuildView::class.java, LineAwesomeIcon.BUILDING.create()))
         nav.addItem(SideNavItem("Utils", UtilsView::class.java, LineAwesomeIcon.TOOLS_SOLID.create()))
         nav.addItem(SideNavItem("About", AboutView::class.java, LineAwesomeIcon.FILE.create()))
+        nav.addItem(SideNavItem("Settings", SettingsView::class.java, LineAwesomeIcon.COG_SOLID.create()))
 
         return nav
     }

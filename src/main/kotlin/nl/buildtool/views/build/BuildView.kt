@@ -15,7 +15,7 @@ import com.vaadin.flow.router.PageTitle
 import com.vaadin.flow.router.Route
 import com.vaadin.flow.router.RouteAlias
 import com.vaadin.flow.theme.lumo.LumoUtility
-import nl.buildtool.LoggingService
+import nl.buildtool.services.LoggingService
 import nl.buildtool.utils.ExtensionFunctions.logEvent
 import nl.buildtool.views.MainLayout
 
@@ -25,10 +25,8 @@ import nl.buildtool.views.MainLayout
 @RouteAlias(value = "", layout = MainLayout::class)
 class BuildView(
     pomFileDataProvider: PomFileDataProvider,
-    private val loggingService: LoggingService
+    loggingService: LoggingService
 ) : Composite<VerticalLayout?>() {
-    lateinit var textArea: TextArea
-
     init {
         val layoutRow = HorizontalLayout()
         layoutRow.setId("layoutRow1")
@@ -89,10 +87,11 @@ class BuildView(
         buttonCleanLog.addClickListener {
             logEvent("buttonCleanLog clicked")
         }
-        val layoutRow7 = HorizontalLayout()
-        layoutRow7.setId("layoutRow7")
-
-        setupTextArea()
+        val footerRow = HorizontalLayout()
+        footerRow.setId("footerRow")
+        footerRow.addClassName(LumoUtility.Gap.MEDIUM)
+        footerRow.width = "100%"
+        footerRow.height = "min-content"
 
         content?.width = "100%"
         content?.style?.set("flex-grow", "1")
@@ -191,13 +190,9 @@ class BuildView(
         layoutRow6.setAlignSelf(FlexComponent.Alignment.CENTER, buttonCleanLog)
         buttonCleanLog.width = "min-content"
         buttonCleanLog.addThemeVariants(ButtonVariant.LUMO_TERTIARY)
-        layoutRow7.addClassName(LumoUtility.Gap.MEDIUM)
-        layoutRow7.width = "100%"
-        layoutRow7.height = "min-content"
 
-        layoutRow7.setAlignSelf(FlexComponent.Alignment.CENTER, textArea)
-        textArea.style["flex-grow"] = "1"
-        textArea.height = "100%"
+        val loggingTextArea = loggingService.setupTextArea(TextArea())
+        footerRow.setAlignSelf(FlexComponent.Alignment.CENTER, loggingTextArea)
 
         val treeGrid = pomFileDataProvider.createTreeGrid()
 
@@ -220,30 +215,9 @@ class BuildView(
         layoutRow5.add(layoutRow6)
         layoutRow6.add(buttonRefresh)
         layoutRow6.add(buttonCleanLog)
-        content?.add(layoutRow7)
-        layoutRow7.add(textArea)
 
-        // postInit
-        postInit()
+        content?.add(footerRow)
+        footerRow.add(loggingTextArea)
     }
 
-    private fun setupTextArea() {
-        this.textArea = TextArea()
-        textArea.setId("logTextArea")
-        textArea.setWidthFull()
-        textArea.minHeight = "100px"
-        textArea.maxHeight = "150px"
-        textArea.label = "Log"
-        textArea.placeholder = "<empty>"
-        textArea.isClearButtonVisible = true
-        textArea.isReadOnly = true
-    }
-
-    private fun postInit() {
-        loggingService.initialiseer(this.textArea)
-    }
-
-//    private fun checkBoxDataProvicer(): CallbackDataProvider<*, *> {
-//        CallbackDataProvider()
-//    }
 }

@@ -10,17 +10,21 @@ import com.vaadin.flow.component.radiobutton.RadioButtonGroup
 import com.vaadin.flow.component.radiobutton.RadioGroupVariant
 import com.vaadin.flow.component.textfield.TextArea
 import com.vaadin.flow.component.textfield.TextField
+import com.vaadin.flow.component.treegrid.TreeGrid
+import com.vaadin.flow.data.value.ValueChangeMode
 import com.vaadin.flow.theme.lumo.LumoUtility
-import nl.buildtool.model.RADIO_VALUE_ALL_IN_WORSPACE
-import nl.buildtool.model.RADIO_VALUE_AUTO_DETECT
-import nl.buildtool.model.RADIO_VALUE_CUSTOM_PREFIX
-import nl.buildtool.model.RADIO_VALUE_SELECTION
+import nl.buildtool.model.*
+import nl.buildtool.services.LoggingService
+import nl.buildtool.utils.ExtensionFunctions.logEvent
 import nl.buildtool.views.build.PomFileDataProvider
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 
 @Component
-class UtilsViewContent(private val pomFileDataProvider: PomFileDataProvider) {
+class UtilsViewContent(
+    private val pomFileDataProvider: PomFileDataProvider,
+    private val loggingService: LoggingService
+) {
     private val logger = LoggerFactory.getLogger(UtilsViewContent::class.java)
 
     private lateinit var mainRow: HorizontalLayout
@@ -28,8 +32,15 @@ class UtilsViewContent(private val pomFileDataProvider: PomFileDataProvider) {
     private lateinit var subTitle: H4
     private lateinit var contentRowPrefixPomFiles: HorizontalLayout
     private var contentRowUpdateDependencies: HorizontalLayout? = null
+    private lateinit var customOrAutoDetectPrefixRadio: RadioButtonGroup<String>
+    private lateinit var pomFileSelectRadio: RadioButtonGroup<String>
+    private lateinit var customPrefixTextfield: TextField
+    private lateinit var executeButton: Button
+    private lateinit var pomFileSelectionGrid: TreeGrid<PomFile>
 
     fun initContent(utilsView: UtilsView) {
+        this.executeButton = utilsView.executeButton
+
         mainRow = HorizontalLayout()
         mainRow.setId("mainRow")
 
@@ -57,31 +68,19 @@ class UtilsViewContent(private val pomFileDataProvider: PomFileDataProvider) {
         val middleColumn = VerticalLayout()
         middleColumn.setId("middleColumn")
 
-        val pomFileSelectRadio = RadioButtonGroup<String>()
+        pomFileSelectRadio = RadioButtonGroup<String>()
         pomFileSelectRadio.setId("pomFileSelectRadio")
 
-        val customOrAutoDetectPrefixRadio = RadioButtonGroup<String>()
+        customOrAutoDetectPrefixRadio = RadioButtonGroup<String>()
         customOrAutoDetectPrefixRadio.setId("customOrAutoDetectPrefixRadio")
-
-        val customPrefixTextfield = TextField()
-        customPrefixTextfield.setId("customPrefixTextfield")
-        customPrefixTextfield.label = "Prefix"
-        customPrefixTextfield.width = "100%"
-
-        val autoDetectInfo = TextArea()
-        autoDetectInfo.setId("autoDetectInfo")
-        autoDetectInfo.isReadOnly = true
-        autoDetectInfo.label = "Auto-detect branch names"
-        autoDetectInfo.width = "100%"
-        autoDetectInfo.value =
-            "Auto-detect branch names based on the GIT branch name. If a PSHV prefix exists in the branch name then this " +
-                    "is used as a POM version prefix"
-        autoDetectInfo.setWidthFull()
 
         val rightColumn = VerticalLayout()
         rightColumn.setId("rightColumn")
 
-        val treeGrid = pomFileDataProvider.createTreeGrid()
+        pomFileSelectionGrid = pomFileDataProvider.createTreeGrid()
+        pomFileSelectionGrid.addSelectionListener {
+            this.evaluateExecuteButtonEnabling()
+        }
 
         utilsView.content!!.addClassName(LumoUtility.Gap.XSMALL)
         utilsView.content!!.addClassName(LumoUtility.Padding.XSMALL)
@@ -121,25 +120,65 @@ class UtilsViewContent(private val pomFileDataProvider: PomFileDataProvider) {
         pomFileSelectRadio.addThemeVariants(RadioGroupVariant.LUMO_VERTICAL)
         pomFileSelectRadio.addValueChangeListener {
             if (it.value == RADIO_VALUE_SELECTION) {
-                rightColumn.add(treeGrid)
+                rightColumn.add(pomFileSelectionGrid)
             } else if (it.value == RADIO_VALUE_ALL_IN_WORSPACE) {
-                rightColumn.remove(treeGrid)
+                rightColumn.remove(pomFileSelectionGrid)
+                pomFileSelectionGrid.deselectAll()
             }
+            evaluateExecuteButtonEnabling()
         }
 
         customOrAutoDetectPrefixRadio.label = "Auto-detect or custom prefix"
         customOrAutoDetectPrefixRadio.width = "min-content"
-        customOrAutoDetectPrefixRadio.setItems(RADIO_VALUE_AUTO_DETECT, RADIO_VALUE_CUSTOM_PREFIX)
+        customOrAutoDetectPrefixRadio.setItems(
+            RADIO_VALUE_AUTO_DETECT,
+            RADIO_VALUE_CUSTOM_PREFIX,
+            RADIO_VALUE_RESET_POMS
+        )
+
+        customPrefixTextfield = TextField()
+        customPrefixTextfield.setId("customPrefixTextfield")
+        customPrefixTextfield.label = "Prefix"
+        customPrefixTextfield.width = "100%"
+        customPrefixTextfield.addValueChangeListener {
+            logger.info("Text value=${customPrefixTextfield.value}")
+            this.evaluateExecuteButtonEnabling()
+        }
+        customPrefixTextfield.valueChangeTimeout = 300;
+        customPrefixTextfield.valueChangeMode = ValueChangeMode.LAZY;
+
+        val autoDetectInfoMessage = TextArea()
+        autoDetectInfoMessage.setId("autoDetectInfo")
+        autoDetectInfoMessage.isReadOnly = true
+        autoDetectInfoMessage.label = LABEL_AUTO_DETECT_INFO
+        autoDetectInfoMessage.width = "100%"
+        autoDetectInfoMessage.setWidthFull()
+
         customOrAutoDetectPrefixRadio.addThemeVariants(RadioGroupVariant.LUMO_VERTICAL)
         customOrAutoDetectPrefixRadio.addValueChangeListener {
-            if (it.value == RADIO_VALUE_AUTO_DETECT) {
-                customPrefixTextfield.value = ""
-                middleColumn.remove(customPrefixTextfield)
-                middleColumn.add(autoDetectInfo)
-            } else if (it.value == RADIO_VALUE_CUSTOM_PREFIX) {
-                middleColumn.remove(autoDetectInfo)
-                middleColumn.add(customPrefixTextfield)
+            when (it.value) {
+                RADIO_VALUE_AUTO_DETECT -> {
+                    autoDetectInfoMessage.value = MESSAGE_AUTO_DETECT_INFO
+                    autoDetectInfoMessage.label = LABEL_AUTO_DETECT_INFO
+                    middleColumn.remove(customPrefixTextfield)
+                    middleColumn.add(autoDetectInfoMessage)
+                }
+
+                RADIO_VALUE_CUSTOM_PREFIX -> {
+                    middleColumn.remove(autoDetectInfoMessage)
+                    autoDetectInfoMessage.value = ""
+                    autoDetectInfoMessage.label = ""
+                    middleColumn.add(customPrefixTextfield)
+                }
+
+                RADIO_VALUE_RESET_POMS -> {
+                    autoDetectInfoMessage.value = MESSAGE_RESET_POMS
+                    autoDetectInfoMessage.label = LABEL_RESET_POMS
+                    middleColumn.remove(customPrefixTextfield)
+                    middleColumn.add(autoDetectInfoMessage)
+                }
             }
+            evaluateExecuteButtonEnabling()
         }
 
         rightColumn.setHeightFull()
@@ -165,18 +204,32 @@ class UtilsViewContent(private val pomFileDataProvider: PomFileDataProvider) {
         contentRowPrefixPomFiles.add(rightColumn)
 
         utilsView.content!!.add(mainRow)
+
+        resetToDefaults()
     }
 
     private fun prefixPomsButtonClicked() {
         logger.info("prefixPomsButtonClicked")
+        logEvent("Prefix Poms button clicked")
         subTitle.text = "Prefix pom files"
 
-        secondColumnVerticalLayout.remove(contentRowUpdateDependencies)
+        if (contentRowUpdateDependencies != null) {
+            secondColumnVerticalLayout.remove(contentRowUpdateDependencies)
+        }
+
         secondColumnVerticalLayout.add(contentRowPrefixPomFiles)
+        resetToDefaults()
+    }
+
+    private fun resetToDefaults() {
+        this.pomFileSelectRadio.value = RADIO_VALUE_ALL_IN_WORSPACE
+        this.customOrAutoDetectPrefixRadio.value = RADIO_VALUE_AUTO_DETECT
+        this.pomFileSelectionGrid.deselectAll()
     }
 
     private fun updateDependenciesButtonClicked() {
         logger.info("updateDependenciesButtonClicked")
+        logEvent("Update dependencies button clicked")
         subTitle.text = "Update dependencies"
 
         // Verwijder Prefix pom files content
@@ -235,4 +288,21 @@ class UtilsViewContent(private val pomFileDataProvider: PomFileDataProvider) {
         contentRowUpdateDependencies.add(targetColumn)
         this.contentRowUpdateDependencies = contentRowUpdateDependencies
     }
+
+    fun evaluateExecuteButtonEnabling() {
+        this.executeButton.isEnabled = pomFileSelectRadioIsValid() && customOrAutoDetectPrefixRadioIsValid()
+    }
+
+    private fun pomFileSelectRadioIsValid() =
+        this.pomFileSelectRadio.value == RADIO_VALUE_ALL_IN_WORSPACE ||
+                (this.pomFileSelectRadio.value == RADIO_VALUE_SELECTION && this.pomFileSelectionGrid.selectedItems.isNotEmpty())
+
+    private fun customOrAutoDetectPrefixRadioIsValid() =
+        this.customOrAutoDetectPrefixRadio.value?.isNotEmpty() == true && customPrefixIsValid()
+
+    private fun customPrefixIsValid() =
+        this.customOrAutoDetectPrefixRadio.value != RADIO_VALUE_CUSTOM_PREFIX ||
+                (this.customOrAutoDetectPrefixRadio.value == RADIO_VALUE_CUSTOM_PREFIX &&
+                        this.customPrefixTextfield.value?.isNotEmpty() == true)
+
 }

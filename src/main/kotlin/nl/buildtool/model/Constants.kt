@@ -58,8 +58,18 @@ val timeoutUnit: TimeUnit = TimeUnit.SECONDS
 
 const val RADIO_VALUE_ALL_IN_WORSPACE = "All in workspace"
 const val RADIO_VALUE_SELECTION = "Selection"
+const val RADIO_VALUE_RESET_POMS = "Reset prefixes"
 const val RADIO_VALUE_AUTO_DETECT = "Auto-detect"
 const val RADIO_VALUE_CUSTOM_PREFIX = "Custom prefix"
+
+const val MESSAGE_AUTO_DETECT_INFO =
+    "Auto-detect branch names based on the GIT branch name. If a PSHV prefix exists in the branch name then this " +
+            "is used as a POM version prefix"
+const val MESSAGE_RESET_POMS = "POM version prefixes will be removed."
+
+const val LABEL_AUTO_DETECT_INFO = "Auto-detect branch names"
+const val LABEL_RESET_POMS = "Reset pom version"
+
 
 enum class GitCommand(val command: String) {
     SHOW_CURRENT_BRANCH("git branch --show-current"),
