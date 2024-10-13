@@ -16,7 +16,9 @@ import com.vaadin.flow.theme.lumo.LumoUtility
 import nl.buildtool.services.LoggingService
 import nl.buildtool.utils.ExtensionFunctions.logEvent
 import nl.buildtool.views.MainLayout
+import nl.buildtool.views.components.ProgressBarIndeterminate
 import org.slf4j.LoggerFactory
+
 
 @PageTitle("Utils")
 @Menu(icon = "line-awesome/svg/pencil-ruler-solid.svg", order = 0.0)
@@ -30,33 +32,43 @@ class UtilsView(
 ) : Composite<VerticalLayout?>() {
     private val logger = LoggerFactory.getLogger(UtilsView::class.java)
     var executeButton: Button
+    private var progressBar: ProgressBarIndeterminate
 
     init {
+        content?.setId("UtilsViewContent")
         content?.width = "100%"
         content?.style?.set("flex-grow", "1")
+        content?.style?.set("gap", "0")
 
         val footerRow = VerticalLayout()
         footerRow.setId("footerRow")
-        footerRow.addClassName(LumoUtility.Gap.MEDIUM)
         footerRow.width = "100%"
         footerRow.height = "min-content"
-        footerRow.addClassName(LumoUtility.Gap.XSMALL)
-        footerRow.addClassName(LumoUtility.Padding.XSMALL)
+        footerRow.style?.set("gap", "0")
+
+        progressBar = ProgressBarIndeterminate()
+        progressBar.setId("progressBar")
 
         executeButton = Button("Execute")
-        executeButton.isDisableOnClick = true
         executeButton.setId("executeButton")
-        executeButton.style["flex-grow"] = "1"
+        executeButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY)
+        executeButton.isDisableOnClick = true
+        executeButton.width = "181px"
         executeButton.addClickListener {
             logEvent("executeButton clicked")
             // disable radio's etc
+            this.progressBar.isVisible = true
+            this.executeButton.isVisible = false
         }
 
-        executeButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY)
-        // enable/disable als aan voorwaarden wordt voldaan.
+        val buttonRow = HorizontalLayout()
+        buttonRow.setId("buttonRow")
+        buttonRow.width = "100%"
+        buttonRow.height = "min-content"
+        buttonRow.style?.set("gap", "0")
 
-        utilsViewContent.initContent(this)
-        utilsViewContent.evaluateExecuteButtonEnabling()
+        buttonRow.add(executeButton)
+        buttonRow.add(progressBar)
 
         val bottomRow = HorizontalLayout()
         bottomRow.setId("bottomRow")
@@ -69,8 +81,11 @@ class UtilsView(
         val loggingTextArea = loggingService.setupTextArea(TextArea())
         footerRow.setAlignSelf(FlexComponent.Alignment.CENTER, loggingTextArea)
 
-        footerRow.add(executeButton)
+        footerRow.add(buttonRow)
         footerRow.add(loggingTextArea)
+
+        utilsViewContent.initContent(this)
+        utilsViewContent.evaluateExecuteButtonEnabling()
 
         content!!.add(footerRow)
     }

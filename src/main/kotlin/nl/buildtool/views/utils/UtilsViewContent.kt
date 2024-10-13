@@ -35,11 +35,11 @@ class UtilsViewContent(
     private lateinit var customOrAutoDetectPrefixRadio: RadioButtonGroup<String>
     private lateinit var pomFileSelectRadio: RadioButtonGroup<String>
     private lateinit var customPrefixTextfield: TextField
-    private lateinit var executeButton: Button
+    private lateinit var utilsView: UtilsView
     private lateinit var pomFileSelectionGrid: TreeGrid<PomFile>
 
     fun initContent(utilsView: UtilsView) {
-        this.executeButton = utilsView.executeButton
+        this.utilsView = utilsView
 
         mainRow = HorizontalLayout()
         mainRow.setId("mainRow")
@@ -290,7 +290,7 @@ class UtilsViewContent(
     }
 
     fun evaluateExecuteButtonEnabling() {
-        this.executeButton.isEnabled = pomFileSelectRadioIsValid() && customOrAutoDetectPrefixRadioIsValid()
+        this.utilsView.executeButton.isEnabled = pomFileSelectRadioIsValid() && customOrAutoDetectPrefixRadioIsValid()
     }
 
     private fun pomFileSelectRadioIsValid() =

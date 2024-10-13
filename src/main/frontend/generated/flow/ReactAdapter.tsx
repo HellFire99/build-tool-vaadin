@@ -231,7 +231,7 @@ export abstract class ReactAdapterElement extends HTMLElement {
             vaadinObject.registrations = vaadinObject.registrations || [];
             vaadinObject.registrations.push({
                 is: 'ReactAdapterElement',
-                version: '24.4.4'
+                version: '24.4.9'
             });
         }
     }

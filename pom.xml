@@ -28,7 +28,7 @@
     <properties>
         <java.version>21</java.version>
         <kotlin.version>1.9.24</kotlin.version>
-        <vaadin.version>24.4.6</vaadin.version>
+        <vaadin.version>24.4.13</vaadin.version>
         <maven.invoker.version>3.3.0</maven.invoker.version>
     </properties>
 

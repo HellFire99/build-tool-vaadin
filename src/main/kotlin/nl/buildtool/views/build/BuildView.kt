@@ -13,7 +13,6 @@ import com.vaadin.flow.component.textfield.TextField
 import com.vaadin.flow.router.Menu
 import com.vaadin.flow.router.PageTitle
 import com.vaadin.flow.router.Route
-import com.vaadin.flow.router.RouteAlias
 import com.vaadin.flow.theme.lumo.LumoUtility
 import nl.buildtool.services.LoggingService
 import nl.buildtool.utils.ExtensionFunctions.logEvent
@@ -22,17 +21,21 @@ import nl.buildtool.views.MainLayout
 @PageTitle("Build")
 @Menu(icon = "line-awesome/svg/pencil-ruler-solid.svg", order = 0.0)
 @Route(value = "", layout = MainLayout::class)
-@RouteAlias(value = "", layout = MainLayout::class)
 class BuildView(
     pomFileDataProvider: PomFileDataProvider,
     loggingService: LoggingService
 ) : Composite<VerticalLayout?>() {
     init {
+        content?.style?.set("gap", "0")
+        content?.width = "100%"
+        content?.style?.set("flex-grow", "1")
+
         val layoutRow = HorizontalLayout()
         layoutRow.setId("layoutRow1")
 
         val textField = TextField()
         textField.setId("filterTextField")
+
         val buttonClearFilter = Button("X")
         buttonClearFilter.setId("buttonClearFilter")
         buttonClearFilter.addClickListener {
@@ -41,15 +44,30 @@ class BuildView(
 
         val layoutRow2 = HorizontalLayout()
         layoutRow2.setId("layoutRow2")
+        layoutRow2.width = "100%"
+        layoutRow2.minHeight = "490px"
+        layoutRow2.style.set("flex-grow", "1")
+        layoutRow2.style?.set("gap", "0")
 
         val leftColumn = VerticalLayout()
         leftColumn.setId("leftColumn")
-
-        val rightColumn = VerticalLayout()
-        rightColumn.setId("rightColumn")
+        leftColumn.addClassName(LumoUtility.Padding.XSMALL)
+        leftColumn.width = "100%"
+        leftColumn.style.set("flex-grow", "1")
+        leftColumn.style.set("padding-left", "0")
 
         val layoutRow3 = HorizontalLayout()
         layoutRow3.setId("layoutRow3")
+        layoutRow3.setWidthFull()
+        layoutRow3.width = "100%"
+        layoutRow3.height = "min-content"
+        layoutRow3.style?.set("gap", "0")
+
+        val rightColumn = VerticalLayout()
+        rightColumn.setId("rightColumn")
+        rightColumn.style?.set("gap", "0")
+        rightColumn.minWidth = "360px"
+        rightColumn.width = ""
 
         val layoutColumn4 = VerticalLayout()
         layoutColumn4.setId("layoutColumn4")
@@ -62,8 +80,9 @@ class BuildView(
 
         val optionsCheckbox = CheckboxGroup<Any?>()
         optionsCheckbox.setId("checkboxGroup2")
-
-        optionsCheckbox.setId("layoutRow4")
+        optionsCheckbox.label = "Options"
+        optionsCheckbox.setItems("git pull", "stop on error", "skip tests", "parallel")
+        optionsCheckbox.addThemeVariants(CheckboxGroupVariant.LUMO_VERTICAL)
 
         val layoutColumn6 = VerticalLayout()
         layoutColumn6.setId("layoutColumn6")
@@ -93,8 +112,6 @@ class BuildView(
         footerRow.width = "100%"
         footerRow.height = "min-content"
 
-        content?.width = "100%"
-        content?.style?.set("flex-grow", "1")
         layoutRow.addClassName(LumoUtility.Gap.MEDIUM)
         layoutRow.width = "100%"
         layoutRow.height = "min-content"
@@ -105,25 +122,7 @@ class BuildView(
         buttonClearFilter.width = "min-content"
         buttonClearFilter.maxWidth = "20px"
         buttonClearFilter.addThemeVariants(ButtonVariant.LUMO_PRIMARY)
-        layoutRow2.addClassName(LumoUtility.Gap.XSMALL)
-        layoutRow2.width = "100%"
-        layoutRow2.minHeight = "490px"
-        layoutRow2.style.set("flex-grow", "1")
 
-        leftColumn.addClassName(LumoUtility.Padding.XSMALL)
-        leftColumn.width = "100%"
-        leftColumn.style.set("flex-grow", "1")
-        leftColumn.style.set("padding-left", "0")
-        rightColumn.addClassName(LumoUtility.Gap.XSMALL)
-        rightColumn.addClassName(LumoUtility.Padding.XSMALL)
-        rightColumn.style.set("flex-grow", "1")
-        layoutRow3.setWidthFull()
-        rightColumn.setFlexGrow(1.0, layoutRow3)
-        rightColumn.width = "25%"
-        layoutRow3.addClassName(LumoUtility.Gap.XSMALL)
-        layoutRow3.addClassName(LumoUtility.Padding.XSMALL)
-        layoutRow3.width = "100%"
-        layoutRow3.height = "min-content"
         layoutColumn4.setHeightFull()
         layoutRow3.setFlexGrow(1.0, layoutColumn4)
         layoutColumn4.addClassName(LumoUtility.Gap.XSMALL)
@@ -142,11 +141,6 @@ class BuildView(
         layoutColumn5.addClassName(LumoUtility.Padding.XSMALL)
         layoutColumn5.width = "100%"
         layoutColumn5.height = "min-content"
-        optionsCheckbox.label = "Options"
-        optionsCheckbox.width = "min-content"
-
-        optionsCheckbox.setItems("git pull", "stop on error", "skip tests", "parallel")
-        optionsCheckbox.addThemeVariants(CheckboxGroupVariant.LUMO_VERTICAL)
 
         layoutColumn6.setWidthFull()
         content?.setFlexGrow(1.0, layoutColumn6)
