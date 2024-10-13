@@ -1,6 +1,7 @@
 package nl.buildtool.views.utils
 
 import com.vaadin.flow.component.Composite
+import com.vaadin.flow.component.UI
 import com.vaadin.flow.component.button.Button
 import com.vaadin.flow.component.button.ButtonVariant
 import com.vaadin.flow.component.dependency.Uses
@@ -13,11 +14,14 @@ import com.vaadin.flow.router.Menu
 import com.vaadin.flow.router.PageTitle
 import com.vaadin.flow.router.Route
 import com.vaadin.flow.theme.lumo.LumoUtility
+import nl.buildtool.model.UpdatePomsParameters
 import nl.buildtool.services.LoggingService
 import nl.buildtool.utils.ExtensionFunctions.logEvent
+import nl.buildtool.utils.PomFilePrefixExecutor
 import nl.buildtool.views.MainLayout
 import nl.buildtool.views.components.ProgressBarIndeterminate
 import org.slf4j.LoggerFactory
+import java.util.concurrent.CompletableFuture
 
 
 @PageTitle("Utils")
@@ -28,11 +32,12 @@ import org.slf4j.LoggerFactory
 )
 class UtilsView(
     utilsViewContent: UtilsViewContent,
-    loggingService: LoggingService
+    loggingService: LoggingService,
+    pomFilePrefixExecutor: PomFilePrefixExecutor
 ) : Composite<VerticalLayout?>() {
     private val logger = LoggerFactory.getLogger(UtilsView::class.java)
     var executeButton: Button
-    private var progressBar: ProgressBarIndeterminate
+    var progressBar: ProgressBarIndeterminate
 
     init {
         content?.setId("UtilsViewContent")
@@ -47,7 +52,6 @@ class UtilsView(
         footerRow.style?.set("gap", "0")
 
         progressBar = ProgressBarIndeterminate()
-        progressBar.setId("progressBar")
 
         executeButton = Button("Execute")
         executeButton.setId("executeButton")
@@ -55,10 +59,29 @@ class UtilsView(
         executeButton.isDisableOnClick = true
         executeButton.width = "181px"
         executeButton.addClickListener {
-            logEvent("executeButton clicked")
-            // disable radio's etc
-            this.progressBar.isVisible = true
-            this.executeButton.isVisible = false
+            val ui: UI = it.source.ui.orElseThrow()
+            val startJobFuture = CompletableFuture.supplyAsync {
+                ui.access {
+                    progressBar.isVisible = true
+                    executeButton.isVisible = false
+                }
+            }
+
+            val jobExecutionParameter = UpdatePomsParameters(
+                customOrAutoDetectPrefixRadio = utilsViewContent.customOrAutoDetectPrefixRadio.value,
+                pomFileSelectRadioValue = utilsViewContent.pomFileSelectRadio.value,
+                customPrefixTextfield = utilsViewContent.customPrefixTextfield.value,
+                selectedPomFiles = utilsViewContent.pomFileSelectionGrid.selectedItems
+            )
+            val jobExecution = pomFilePrefixExecutor.executePomPrefixingJob(ui, this, jobExecutionParameter)
+
+            startJobFuture.thenRun {
+                updateUi(ui, "Execute button clicked")
+            }
+            jobExecution?.thenRun {
+                updateUi(ui, "Job done!")
+            }
+
         }
 
         val buttonRow = HorizontalLayout()
@@ -90,5 +113,10 @@ class UtilsView(
         content!!.add(footerRow)
     }
 
+    private fun updateUi(ui: UI, message: String) {
+        ui.access {
+            logEvent(message)
+        }
+    }
 
 }

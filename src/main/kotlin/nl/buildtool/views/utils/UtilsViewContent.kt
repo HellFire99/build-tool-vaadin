@@ -32,11 +32,11 @@ class UtilsViewContent(
     private lateinit var subTitle: H4
     private lateinit var contentRowPrefixPomFiles: HorizontalLayout
     private var contentRowUpdateDependencies: HorizontalLayout? = null
-    private lateinit var customOrAutoDetectPrefixRadio: RadioButtonGroup<String>
-    private lateinit var pomFileSelectRadio: RadioButtonGroup<String>
-    private lateinit var customPrefixTextfield: TextField
     private lateinit var utilsView: UtilsView
-    private lateinit var pomFileSelectionGrid: TreeGrid<PomFile>
+    lateinit var customOrAutoDetectPrefixRadio: RadioButtonGroup<String>
+    lateinit var pomFileSelectRadio: RadioButtonGroup<String>
+    lateinit var customPrefixTextfield: TextField
+    lateinit var pomFileSelectionGrid: TreeGrid<PomFile>
 
     fun initContent(utilsView: UtilsView) {
         this.utilsView = utilsView

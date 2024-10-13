@@ -1,7 +1,6 @@
 package nl.buildtool.utils
 
 import com.google.common.base.Stopwatch
-import nl.buildtool.git.GitExecutor
 import nl.buildtool.git.getGitBranchName
 import nl.buildtool.git.isGitBranchOf
 import nl.buildtool.model.Globals
@@ -24,7 +23,7 @@ import javax.xml.transform.stream.StreamResult
 import javax.xml.xpath.XPathFactory
 
 @Component
-class UpdatePomsUtil(private val gitExecutor: GitExecutor) {
+class UpdatePomsUtil {
     private val logger = LoggerFactory.getLogger(UpdatePomsUtil::class.java)
 
     @Value("\${root:.}")

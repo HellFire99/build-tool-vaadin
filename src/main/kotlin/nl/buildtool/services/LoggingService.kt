@@ -16,7 +16,8 @@ class LoggingService : InitializingBean {
     @Subscribe
     fun updateTextArea(event: MavenLogEvent) {
         logger.info(event.text)
-        loggingTextArea.value = "${loggingTextArea.value}\n ${event.text}\n"
+        loggingTextArea.value = "${loggingTextArea.value}\n ${event.text}"
+        loggingTextArea.scrollToEnd()
     }
 
     private fun initialiseer() {

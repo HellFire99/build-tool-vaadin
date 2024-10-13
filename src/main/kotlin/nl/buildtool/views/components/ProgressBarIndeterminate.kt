@@ -7,6 +7,7 @@ class ProgressBarIndeterminate : Div() {
     private val progressBar: ProgressBar
 
     init {
+        this.setId("progressBar")
         this.width = "100%"
         this.height = "42.5px"
         this.style?.set("flex-grow", "1")
