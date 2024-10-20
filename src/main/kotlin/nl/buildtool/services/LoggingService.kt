@@ -1,6 +1,7 @@
 package nl.buildtool.services
 
 import com.google.common.eventbus.Subscribe
+import com.vaadin.flow.component.UI
 import com.vaadin.flow.component.textfield.TextArea
 import nl.buildtool.model.events.MavenLogEvent
 import nl.buildtool.utils.GlobalEventBus
@@ -12,16 +13,21 @@ import org.springframework.stereotype.Component
 class LoggingService : InitializingBean {
     private val logger = LoggerFactory.getLogger(LoggingService::class.java)
     private lateinit var loggingTextArea: TextArea
+    private lateinit var ui: UI
 
     @Subscribe
-    fun updateTextArea(event: MavenLogEvent) {
+    fun subscribe(event: MavenLogEvent) {
         logger.info(event.text)
-        loggingTextArea.value = "${loggingTextArea.value}\n ${event.text}"
-        loggingTextArea.scrollToEnd()
-    }
-
-    private fun initialiseer() {
-        GlobalEventBus.eventBus.register(this)
+        ui.access {
+            loggingTextArea.value = "${
+                if (loggingTextArea.value.isNullOrEmpty()) {
+                    event.text
+                } else {
+                    loggingTextArea.value + "\n" + event.text
+                }
+            } "
+            loggingTextArea.scrollToEnd()
+        }
     }
 
     fun setupTextArea(loggingTextArea: TextArea): TextArea {
@@ -36,10 +42,11 @@ class LoggingService : InitializingBean {
         loggingTextArea.style["flex-grow"] = "1"
         loggingTextArea.height = "100%"
         this.loggingTextArea = loggingTextArea
+        this.ui = UI.getCurrent()
         return loggingTextArea
     }
 
     override fun afterPropertiesSet() {
-        initialiseer()
+        GlobalEventBus.eventBus.register(this)
     }
 }

@@ -1,5 +1,6 @@
 package nl.buildtool.views.utils
 
+import com.google.common.eventbus.Subscribe
 import com.vaadin.flow.component.button.Button
 import com.vaadin.flow.component.button.ButtonVariant
 import com.vaadin.flow.component.html.H4
@@ -14,17 +15,15 @@ import com.vaadin.flow.component.treegrid.TreeGrid
 import com.vaadin.flow.data.value.ValueChangeMode
 import com.vaadin.flow.theme.lumo.LumoUtility
 import nl.buildtool.model.*
-import nl.buildtool.services.LoggingService
+import nl.buildtool.model.events.RefreshTableEvent
 import nl.buildtool.utils.ExtensionFunctions.logEvent
+import nl.buildtool.utils.GlobalEventBus
 import nl.buildtool.views.build.PomFileDataProvider
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 
 @Component
-class UtilsViewContent(
-    private val pomFileDataProvider: PomFileDataProvider,
-    private val loggingService: LoggingService
-) {
+class UtilsViewContent(private val pomFileDataProvider: PomFileDataProvider) {
     private val logger = LoggerFactory.getLogger(UtilsViewContent::class.java)
 
     private lateinit var mainRow: HorizontalLayout
@@ -39,6 +38,8 @@ class UtilsViewContent(
     lateinit var pomFileSelectionGrid: TreeGrid<PomFile>
 
     fun initContent(utilsView: UtilsView) {
+        GlobalEventBus.eventBus.register(this)
+
         this.utilsView = utilsView
 
         mainRow = HorizontalLayout()
@@ -291,6 +292,11 @@ class UtilsViewContent(
 
     fun evaluateExecuteButtonEnabling() {
         this.utilsView.executeButton.isEnabled = pomFileSelectRadioIsValid() && customOrAutoDetectPrefixRadioIsValid()
+    }
+
+    @Subscribe
+    private fun subscribe(event: RefreshTableEvent) {
+
     }
 
     private fun pomFileSelectRadioIsValid() =

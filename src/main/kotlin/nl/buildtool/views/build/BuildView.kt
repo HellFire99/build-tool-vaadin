@@ -185,7 +185,9 @@ class BuildView(
         buttonCleanLog.width = "min-content"
         buttonCleanLog.addThemeVariants(ButtonVariant.LUMO_TERTIARY)
 
-        val loggingTextArea = loggingService.setupTextArea(TextArea())
+        val loggingTextArea = loggingService.setupTextArea(
+            loggingTextArea = TextArea()
+        )
         footerRow.setAlignSelf(FlexComponent.Alignment.CENTER, loggingTextArea)
 
         val treeGrid = pomFileDataProvider.createTreeGrid()

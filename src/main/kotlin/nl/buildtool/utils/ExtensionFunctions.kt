@@ -1,18 +1,18 @@
 package nl.buildtool.utils
 
 import nl.buildtool.model.events.MavenLogEvent
+import java.util.concurrent.CompletableFuture
 
 object ExtensionFunctions {
 
     fun logEvent(message: String) {
-        // TODO make async
-        run {
+        CompletableFuture.supplyAsync {
             GlobalEventBus.eventBus.post(MavenLogEvent(message))
         }
     }
 
     fun post(event: Any) {
-        run {
+        CompletableFuture.supplyAsync {
             GlobalEventBus.eventBus.post(event)
         }
     }

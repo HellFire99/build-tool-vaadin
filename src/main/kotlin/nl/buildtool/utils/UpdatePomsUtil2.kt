@@ -69,14 +69,17 @@ class UpdatePomsUtil2 {
             logEvent("Setting to static JiraNr $jiraNr")
         }
         autoDetectBranchNames?.let {
-            logEvent("Auto-detecting branch names")
+            if (it) {
+                logEvent("Auto-detecting branch names")
+            }
         }
 
         teUpdatenPomFiles.forEach { pomFile ->
             val myJiraNr = jiraNr ?: determineJiraNrByBranchName(pomFile)
             myJiraNr?.let {
-                if (pomFile.isGitBranchOf(it)) {
-                    logEvent("$it is een $it branch")
+                if (autoDetectBranchNames == true && pomFile.isGitBranchOf(it)) {
+                    updatePomVersie(pomFile, it)
+                } else {
                     updatePomVersie(pomFile, it)
                 }
             }
@@ -129,8 +132,13 @@ class UpdatePomsUtil2 {
     private fun updatePomVersie(pomFile: PomFile, pomDocument: Document, pomVersion: String, jiraNr: String) {
         val versions = pomDocument.getElementsByTagName("version")
 
+//        FIX DIT: werkt niet als er geen parent is.
         // de 2e voorkomende version is de pom.versie die we zoeken
-        val versie = versions.item(1) as Element?
+        val versie = if (versions.length == 1) {
+            versions.item(0) as Element?
+        } else {
+            versions.item(1) as Element?
+        }
         val waarde = versie?.firstChild?.textContent
         waarde?.let {
             if (waarde == pomVersion && !waarde.contains(jiraNr)) {

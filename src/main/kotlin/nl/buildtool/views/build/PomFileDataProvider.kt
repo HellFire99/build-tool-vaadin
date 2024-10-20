@@ -82,7 +82,7 @@ class PomFileDataProvider(private val directoryCrawler: DirectoryCrawler) {
                 if (globalPomFile?.modulePoms?.isNotEmpty() == true) {
                     // Select children in treeGrid
                     globalPomFile.modulePoms.values.forEach { pomFile ->
-                        this.treeGrid.getSelectionModel().select(pomFile)
+                        this.treeGrid.selectionModel.select(pomFile)
                     }
                 }
             }
@@ -107,12 +107,16 @@ class PomFileDataProvider(private val directoryCrawler: DirectoryCrawler) {
                 if (globalPomFile?.modulePoms?.isNotEmpty() == true) {
                     // Select children in treeGrid
                     globalPomFile.modulePoms.values.forEach { pomFile ->
-                        this.treeGrid.getSelectionModel().deselect(pomFile)
+                        this.treeGrid.selectionModel.deselect(pomFile)
                     }
                 }
             }
 
         }
+    }
 
+    fun refresh(withReload: Boolean) {
+        Globals.pomFileList = directoryCrawler.getPomFileList()
+        dataProvider.refreshAll()
     }
 }

@@ -76,10 +76,10 @@ class UtilsView(
             val jobExecution = pomFilePrefixExecutor.executePomPrefixingJob(ui, this, jobExecutionParameter)
 
             startJobFuture.thenRun {
-                updateUi(ui, "Execute button clicked")
+                logEvent("Execute button clicked")
             }
             jobExecution?.thenRun {
-                updateUi(ui, "Job done!")
+                logEvent("Job done!")
             }
 
         }
@@ -101,7 +101,9 @@ class UtilsView(
         bottomRow.addClassName(LumoUtility.Gap.XSMALL)
         bottomRow.addClassName(LumoUtility.Padding.XSMALL)
 
-        val loggingTextArea = loggingService.setupTextArea(TextArea())
+        val loggingTextArea = loggingService.setupTextArea(
+            loggingTextArea = TextArea()
+        )
         footerRow.setAlignSelf(FlexComponent.Alignment.CENTER, loggingTextArea)
 
         footerRow.add(buttonRow)
@@ -111,12 +113,6 @@ class UtilsView(
         utilsViewContent.evaluateExecuteButtonEnabling()
 
         content!!.add(footerRow)
-    }
-
-    private fun updateUi(ui: UI, message: String) {
-        ui.access {
-            logEvent(message)
-        }
     }
 
 }
