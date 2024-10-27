@@ -1,7 +1,6 @@
 package nl.buildtool.model
 
 import org.apache.maven.shared.utils.cli.CommandLineException
-import org.slf4j.LoggerFactory
 import java.io.File
 import java.time.Duration
 import java.time.LocalDateTime
@@ -20,7 +19,6 @@ class PomFile(
     var triggerReload: Boolean? = false,
     var modules: List<String>? = emptyList()
 ) {
-    private val logger = LoggerFactory.getLogger(PomFile::class.java)
     var executionException: CommandLineException? = null
     var modulePoms = mapOf<String, PomFile>()
 

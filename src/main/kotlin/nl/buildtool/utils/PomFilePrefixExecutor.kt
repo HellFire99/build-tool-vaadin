@@ -9,7 +9,7 @@ import java.util.concurrent.CompletableFuture
 
 
 @Service
-class PomFilePrefixExecutor(private val updatePomsUtil2: UpdatePomsUtil2) {
+class PomFilePrefixExecutor(private val updatePomsUtil: UpdatePomsUtil) {
 
     @Async
     fun executePomPrefixingJob(
@@ -18,7 +18,7 @@ class PomFilePrefixExecutor(private val updatePomsUtil2: UpdatePomsUtil2) {
         jobExecutionParameter: UpdatePomsParameters
     ): CompletableFuture<Any>? = CompletableFuture.supplyAsync {
         try {
-            updatePomsUtil2.updatePoms(jobExecutionParameter)
+            updatePomsUtil.updatePoms(jobExecutionParameter)
 
             ui.access {
                 utilsView.progressBar.isVisible = false

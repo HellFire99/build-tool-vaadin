@@ -3,35 +3,87 @@ package nl.buildtool.utils
 import com.google.common.base.Stopwatch
 import nl.buildtool.git.getGitBranchName
 import nl.buildtool.git.isGitBranchOf
-import nl.buildtool.model.Globals
-import nl.buildtool.model.PomFile
+import nl.buildtool.model.*
+import nl.buildtool.model.PomFileConverter.readXml
 import nl.buildtool.model.events.RefreshTableEvent
 import nl.buildtool.utils.ExtensionFunctions.logEvent
 import nl.buildtool.utils.ExtensionFunctions.post
-import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import org.w3c.dom.Document
 import org.w3c.dom.Element
-import org.xml.sax.InputSource
 import java.io.File
-import java.io.StringReader
-import javax.xml.parsers.DocumentBuilderFactory
 import javax.xml.transform.TransformerFactory
 import javax.xml.transform.dom.DOMSource
 import javax.xml.transform.stream.StreamResult
+import javax.xml.xpath.XPathConstants.NODE
 import javax.xml.xpath.XPathFactory
 
 @Component
 class UpdatePomsUtil {
-    private val logger = LoggerFactory.getLogger(UpdatePomsUtil::class.java)
-
     @Value("\${root:.}")
     lateinit var root: String
 
-    private val jireNrRegexp = Regex("PSHV-[0-9]*")
+    companion object {
+        private val jireNrRegexp = Regex("PSHV-[0-9]*")
 
-    fun updatePoms(jiraNr: String? = "", autoDetectBranchNames: Boolean? = false) {
+        fun getPomVersion(doc: Document): String {
+            val xpFactory = XPathFactory.newInstance()
+            val xPath = xpFactory.newXPath()
+            return xPath.evaluate(XPATH_VERSION, doc)
+        }
+
+        fun getPomVersionNode(doc: Document): Element? {
+            val xpFactory = XPathFactory.newInstance()
+            val xPath = xpFactory.newXPath()
+            return xPath.evaluate(XPATH_VERSION, doc, NODE) as Element?
+        }
+    }
+
+
+    fun updatePoms(updatePomsParameters: UpdatePomsParameters) {
+        val teUpdatenPomFiles = if (updatePomsParameters.pomFileSelectRadioValue == RADIO_VALUE_SELECTION &&
+            updatePomsParameters.selectedPomFiles?.isNotEmpty() == true
+        ) {
+            updatePomsParameters.selectedPomFiles.toSet()
+        } else {
+            Globals.pomFileList.toSet()
+        }
+
+        val prefix = if (updatePomsParameters.customOrAutoDetectPrefixRadio == RADIO_VALUE_CUSTOM_PREFIX) {
+            updatePomsParameters.customPrefixTextfield
+        } else {
+            null
+        }
+        this.updatePoms(
+            jiraNr = prefix,
+            autoDetectBranchNames = updatePomsParameters.customOrAutoDetectPrefixRadio == RADIO_VALUE_AUTO_DETECT,
+            teUpdatenPomFiles = teUpdatenPomFiles
+        )
+    }
+
+    fun updatePomVersieInDocument(pomFile: PomFile, pomDocument: Document, gewenstePomVersionPrefix: String) {
+        val versionNode = getPomVersionNode(pomDocument)
+
+        versionNode?.let {
+            val version = versionNode.firstChild.nodeValue
+            version.let {
+                if (!version.contains(gewenstePomVersionPrefix)) {
+                    // Deze moeten we updaten
+                    val newVersion = "$gewenstePomVersionPrefix-$version"
+                    versionNode.firstChild.nodeValue = newVersion
+                    logEvent(" --> Nieuwe pom versie: $newVersion")
+                    pomDocument.normalizeDocument()
+                }
+            }
+        }
+    }
+
+    private fun updatePoms(
+        jiraNr: String? = "",
+        autoDetectBranchNames: Boolean? = false,
+        teUpdatenPomFiles: Set<PomFile>
+    ) {
         val stopwatch = Stopwatch.createStarted()
 
         if (jiraNr == null && autoDetectBranchNames == null) {
@@ -45,15 +97,17 @@ class UpdatePomsUtil {
             logEvent("Setting to static JiraNr $jiraNr")
         }
         autoDetectBranchNames?.let {
-            logEvent("Auto-detecting branch names")
+            if (it) {
+                logEvent("Auto-detecting branch names")
+            }
         }
 
-        val pomFiles = Globals.pomFileList
-        pomFiles.forEach { pomFile ->
+        teUpdatenPomFiles.forEach { pomFile ->
             val myJiraNr = jiraNr ?: determineJiraNrByBranchName(pomFile)
             myJiraNr?.let {
-                if (pomFile.isGitBranchOf(it)) {
-                    logEvent("$it is een $it branch")
+                if (autoDetectBranchNames == true && pomFile.isGitBranchOf(it)) {
+                    updatePomVersie(pomFile, it)
+                } else {
                     updatePomVersie(pomFile, it)
                 }
             }
@@ -62,7 +116,7 @@ class UpdatePomsUtil {
         logEvent("done: ${stopwatch.stop().elapsed()}ms ")
 
         // trigger reload when poms have been updated and reset reloadTrigger
-        doReloadPomList(pomFiles)
+        doReloadPomList(teUpdatenPomFiles)
     }
 
     private fun determineJiraNrByBranchName(pomFile: PomFile): String? {
@@ -76,47 +130,28 @@ class UpdatePomsUtil {
         }
     }
 
-    private fun doReloadPomList(pomFiles: List<PomFile>) {
+    private fun doReloadPomList(pomFiles: Set<PomFile>) {
         if (pomFiles.any { it.triggerReload == true }) {
             post(RefreshTableEvent(true))
             pomFiles.filter { it.triggerReload == true }.map { it.triggerReload = false }
         }
     }
 
-    private fun updatePomVersie(pomFile: PomFile, gewensteBranchNaam: String) {
+    private fun updatePomVersie(pomFile: PomFile, gewenstePomVersionPrefix: String) {
         // Begint de pom.project.version met het gewensteJiraNr ?
         val pomDocument = readXml(pomFile.file)
         val pomVersion = getPomVersion(pomDocument)
 
         // nee, update pom versie
-        if (!pomVersion.contains(gewensteBranchNaam, true)) {
+        if (!pomVersion.contains(gewenstePomVersionPrefix, true)) {
             logEvent(" --> Pom version: ${pomVersion}. Update pomVersion...")
-            updatePomVersie(pomFile, pomDocument, pomVersion, gewensteBranchNaam)
+            updatePomVersieInDocument(
+                pomFile = pomFile,
+                pomDocument = pomDocument,
+                gewenstePomVersionPrefix = gewenstePomVersionPrefix
+            )
+            writeXml(pomFile.file, pomDocument)
             pomFile.triggerReload = true
-        }
-    }
-
-    private fun readXml(pomFile: File): Document {
-        val dbFactory = DocumentBuilderFactory.newInstance()
-        val dBuilder = dbFactory.newDocumentBuilder()
-        val xmlInput = InputSource(StringReader(pomFile.readText()))
-        return dBuilder.parse(xmlInput)
-    }
-
-    private fun updatePomVersie(pomFile: PomFile, pomDocument: Document, pomVersion: String, jiraNr: String) {
-        val versions = pomDocument.getElementsByTagName("version")
-
-        // de 2e voorkomende version is de pom.versie die we zoeken
-        val versie = versions.item(1) as Element?
-        val waarde = versie?.firstChild?.textContent
-        waarde?.let {
-            if (waarde == pomVersion && !waarde.contains(jiraNr)) {
-                // Deze moeten we updaten
-                versie.textContent = "$jiraNr-$waarde"
-                logEvent(" --> NIEUWE POM VERSIE: ${versie.textContent}")
-                pomDocument.normalizeDocument()
-                writeXml(pomFile.file, pomDocument)
-            }
         }
     }
 
@@ -128,12 +163,6 @@ class UpdatePomsUtil {
         val result = StreamResult(pomFile)
         transformer.transform(source, result)
         logEvent(" --> POM file Created: $pomFile")
-    }
-
-    private fun getPomVersion(doc: Document): String {
-        val xpFactory = XPathFactory.newInstance()
-        val xPath = xpFactory.newXPath()
-        return xPath.evaluate(XPATH_VERSION, doc)
     }
 
 }
