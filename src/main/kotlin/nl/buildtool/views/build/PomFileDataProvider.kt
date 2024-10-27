@@ -17,11 +17,11 @@ class PomFileDataProvider(private val directoryCrawler: DirectoryCrawler) {
     private lateinit var treeGrid: TreeGrid<PomFile>
     private lateinit var dataProvider: TreeDataProvider<PomFile?>
 
-    fun createTreeGrid(): TreeGrid<PomFile> {
+    fun createTreeGrid(update: Boolean = false): TreeGrid<PomFile> {
         this.treeGrid = TreeGrid<PomFile>()
         this.treeGrid.height = "100%"
         this.treeGrid.width = "100%"
-        this.dataProvider = dataProvider()
+        this.dataProvider = dataProvider(update)
         treeGrid.setDataProvider(dataProvider)
         treeGrid.addHierarchyColumn(PomFile::artifactId).setHeader("ArtifactId")
         treeGrid.addColumn(PomFile::version).setHeader("Version")
@@ -37,10 +37,12 @@ class PomFileDataProvider(private val directoryCrawler: DirectoryCrawler) {
         return treeGrid
     }
 
-    fun dataProvider(): TreeDataProvider<PomFile?> {
-        if (Globals.pomFileList.isEmpty()) {
+    fun dataProvider(update: Boolean = false): TreeDataProvider<PomFile?> {
+        if (Globals.pomFileList.isEmpty() || update) {
+            logger.info("Inlezen pomfiles...")
             Globals.pomFileList = directoryCrawler.getPomFileList()
         }
+
         val pomFiles = Globals.pomFileList
         val data = TreeData<PomFile?>()
 
@@ -113,10 +115,5 @@ class PomFileDataProvider(private val directoryCrawler: DirectoryCrawler) {
             }
 
         }
-    }
-
-    fun refresh(withReload: Boolean) {
-        Globals.pomFileList = directoryCrawler.getPomFileList()
-        dataProvider.refreshAll()
     }
 }

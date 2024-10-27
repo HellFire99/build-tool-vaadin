@@ -1,6 +1,8 @@
 package nl.buildtool.views.utils
 
+import com.github.mvysny.kaributools.refresh
 import com.google.common.eventbus.Subscribe
+import com.vaadin.flow.component.UI
 import com.vaadin.flow.component.button.Button
 import com.vaadin.flow.component.button.ButtonVariant
 import com.vaadin.flow.component.html.H4
@@ -36,10 +38,9 @@ class UtilsViewContent(private val pomFileDataProvider: PomFileDataProvider) {
     lateinit var pomFileSelectRadio: RadioButtonGroup<String>
     lateinit var customPrefixTextfield: TextField
     lateinit var pomFileSelectionGrid: TreeGrid<PomFile>
+    lateinit var ui: UI
 
     fun initContent(utilsView: UtilsView) {
-        GlobalEventBus.eventBus.register(this)
-
         this.utilsView = utilsView
 
         mainRow = HorizontalLayout()
@@ -142,10 +143,9 @@ class UtilsViewContent(private val pomFileDataProvider: PomFileDataProvider) {
         customPrefixTextfield.label = "Prefix"
         customPrefixTextfield.width = "100%"
         customPrefixTextfield.addValueChangeListener {
-            logger.info("Text value=${customPrefixTextfield.value}")
             this.evaluateExecuteButtonEnabling()
         }
-        customPrefixTextfield.valueChangeTimeout = 300;
+        customPrefixTextfield.valueChangeTimeout = 300
         customPrefixTextfield.valueChangeMode = ValueChangeMode.LAZY;
 
         val autoDetectInfoMessage = TextArea()
@@ -205,6 +205,10 @@ class UtilsViewContent(private val pomFileDataProvider: PomFileDataProvider) {
         contentRowPrefixPomFiles.add(rightColumn)
 
         utilsView.content!!.add(mainRow)
+
+        GlobalEventBus.eventBus.register(this)
+
+        ui = UI.getCurrent()
 
         resetToDefaults()
     }
@@ -296,6 +300,11 @@ class UtilsViewContent(private val pomFileDataProvider: PomFileDataProvider) {
 
     @Subscribe
     private fun subscribe(event: RefreshTableEvent) {
+        logEvent("RefreshTableEvent ontvangen")
+        ui.access {
+            pomFileSelectionGrid.treeData = pomFileDataProvider.dataProvider(true).treeData
+            pomFileSelectionGrid.refresh()
+        }
 
     }
 

@@ -132,6 +132,7 @@ class UpdatePomsUtil {
 
     private fun doReloadPomList(pomFiles: Set<PomFile>) {
         if (pomFiles.any { it.triggerReload == true }) {
+            logEvent("Afvuren RefreshTableEvent")
             post(RefreshTableEvent(true))
             pomFiles.filter { it.triggerReload == true }.map { it.triggerReload = false }
         }
