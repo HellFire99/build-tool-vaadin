@@ -68,7 +68,7 @@ class UtilsView(
             }
 
             val jobExecutionParameter = UpdatePomsParameters(
-                customOrAutoDetectPrefixRadio = utilsViewContent.customOrAutoDetectPrefixRadio.value,
+                autoDetectCustomOrReset = utilsViewContent.autoDetectCustomOrResetRadio.value,
                 pomFileSelectRadioValue = utilsViewContent.pomFileSelectRadio.value,
                 customPrefixTextfield = utilsViewContent.customPrefixTextfield.value,
                 selectedPomFiles = utilsViewContent.pomFileSelectionGrid.selectedItems

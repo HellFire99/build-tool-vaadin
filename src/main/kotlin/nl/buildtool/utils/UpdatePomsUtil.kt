@@ -2,7 +2,6 @@ package nl.buildtool.utils
 
 import com.google.common.base.Stopwatch
 import nl.buildtool.git.getGitBranchName
-import nl.buildtool.git.isGitBranchOf
 import nl.buildtool.model.*
 import nl.buildtool.model.PomFileConverter.readXml
 import nl.buildtool.model.events.RefreshTableEvent
@@ -25,7 +24,7 @@ class UpdatePomsUtil {
     lateinit var root: String
 
     companion object {
-        private val jireNrRegexp = Regex("PSHV-[0-9]*")
+        private val jireNrRegexp = Regex("(?i)PSHV-[0-9]*")
 
         fun getPomVersion(doc: Document): String {
             val xpFactory = XPathFactory.newInstance()
@@ -40,29 +39,50 @@ class UpdatePomsUtil {
         }
     }
 
-
     fun updatePoms(updatePomsParameters: UpdatePomsParameters) {
-        val teUpdatenPomFiles = if (updatePomsParameters.pomFileSelectRadioValue == RADIO_VALUE_SELECTION &&
-            updatePomsParameters.selectedPomFiles?.isNotEmpty() == true
-        ) {
-            updatePomsParameters.selectedPomFiles.toSet()
-        } else {
-            Globals.pomFileList.toSet()
-        }
+        val teUpdatenPomFiles = bepaalTeUpdatenPomFiles(updatePomsParameters)
 
-        val prefix = if (updatePomsParameters.customOrAutoDetectPrefixRadio == RADIO_VALUE_CUSTOM_PREFIX) {
+        val prefix = if (updatePomsParameters.autoDetectCustomOrReset == RADIO_VALUE_CUSTOM_PREFIX) {
             updatePomsParameters.customPrefixTextfield
         } else {
             null
         }
+
         this.updatePoms(
-            jiraNr = prefix,
-            autoDetectBranchNames = updatePomsParameters.customOrAutoDetectPrefixRadio == RADIO_VALUE_AUTO_DETECT,
+            jiraNr = prefix, // Null prefix betekent auto-detect
+            autoDetectBranchNames = updatePomsParameters.autoDetectCustomOrReset == RADIO_VALUE_AUTO_DETECT,
             teUpdatenPomFiles = teUpdatenPomFiles
         )
     }
 
-    fun updatePomVersieInDocument(pomFile: PomFile, pomDocument: Document, gewenstePomVersionPrefix: String) {
+    fun resetPoms(updatePomsParameters: UpdatePomsParameters) {
+        logEvent("Resetting pomfile prefixes...")
+
+        val teUpdatenPomFiles = bepaalTeUpdatenPomFiles(updatePomsParameters)
+
+        teUpdatenPomFiles.forEach { pomFile ->
+            val gitBranchJiraNr = determineJiraNrByBranchName(pomFile)
+            gitBranchJiraNr?.let { myGitBranchJiraNr ->
+                // Als gitBranchJiraNr voorkomt in de pom.version, wijzig dan de pom.version
+                // verwijder gitBranchJiraNr uit de pom.version
+                val pomDocument = readXml(pomFile.file)
+                verwijderPrefixInPomDocumentVersion(
+                    pomDocument = pomDocument,
+                    teVerwijderenPrefix = myGitBranchJiraNr
+                )
+                writeXml(pomFile.file, pomDocument)
+                pomFile.triggerReload = true
+            }
+        }
+
+        logEvent("Done resetting pomfile prefixes.")
+
+        // trigger reload when poms have been updated and reset reloadTrigger
+        doReloadPomList(updatePomsParameters.selectedPomFiles?.toSet().orEmpty())
+    }
+
+
+    fun zetPrefixInPomDocumentVersion(pomDocument: Document, gewenstePomVersionPrefix: String) {
         val versionNode = getPomVersionNode(pomDocument)
 
         versionNode?.let {
@@ -71,6 +91,23 @@ class UpdatePomsUtil {
                 if (!version.contains(gewenstePomVersionPrefix)) {
                     // Deze moeten we updaten
                     val newVersion = "$gewenstePomVersionPrefix-$version"
+                    versionNode.firstChild.nodeValue = newVersion
+                    logEvent(" --> Nieuwe pom versie: $newVersion")
+                    pomDocument.normalizeDocument()
+                }
+            }
+        }
+    }
+
+    fun verwijderPrefixInPomDocumentVersion(pomDocument: Document, teVerwijderenPrefix: String) {
+        val versionNode = getPomVersionNode(pomDocument)
+
+        versionNode?.let {
+            val version = versionNode.firstChild.nodeValue
+            version.let {
+                if (version.contains(teVerwijderenPrefix)) {
+                    // Deze moeten we updaten
+                    val newVersion = version.replace("$teVerwijderenPrefix-", "")
                     versionNode.firstChild.nodeValue = newVersion
                     logEvent(" --> Nieuwe pom versie: $newVersion")
                     pomDocument.normalizeDocument()
@@ -105,13 +142,8 @@ class UpdatePomsUtil {
         teUpdatenPomFiles.forEach { pomFile ->
             val myJiraNr = jiraNr ?: determineJiraNrByBranchName(pomFile)
             myJiraNr?.let {
-                if (autoDetectBranchNames == true && pomFile.isGitBranchOf(it)) {
-                    updatePomVersie(pomFile, it)
-                } else {
-                    updatePomVersie(pomFile, it)
-                }
+                updatePomVersie(pomFile, it)
             }
-
         }
         logEvent("done: ${stopwatch.stop().elapsed()}ms ")
 
@@ -146,8 +178,7 @@ class UpdatePomsUtil {
         // nee, update pom versie
         if (!pomVersion.contains(gewenstePomVersionPrefix, true)) {
             logEvent(" --> Pom version: ${pomVersion}. Update pomVersion...")
-            updatePomVersieInDocument(
-                pomFile = pomFile,
+            zetPrefixInPomDocumentVersion(
                 pomDocument = pomDocument,
                 gewenstePomVersionPrefix = gewenstePomVersionPrefix
             )
@@ -165,5 +196,19 @@ class UpdatePomsUtil {
         transformer.transform(source, result)
         logEvent(" --> POM file Created: $pomFile")
     }
+
+    private fun bepaalTeUpdatenPomFiles(updatePomsParameters: UpdatePomsParameters): Set<PomFile> {
+        val teUpdatenPomFiles = if (updatePomsParameters.pomFileSelectRadioValue == RADIO_VALUE_SELECTION &&
+            updatePomsParameters.selectedPomFiles?.isNotEmpty() == true
+        ) {
+            updatePomsParameters.selectedPomFiles.toSet()
+        } else {
+            val allePomfiles = Globals.pomFileList.toMutableSet()
+            allePomfiles.addAll(allePomfiles.flatMap { it.modulePoms.values })
+            allePomfiles
+        }
+        return teUpdatenPomFiles
+    }
+
 
 }

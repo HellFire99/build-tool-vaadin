@@ -1,6 +1,7 @@
 package nl.buildtool.utils
 
 import com.vaadin.flow.component.UI
+import nl.buildtool.model.RADIO_VALUE_RESET_POMS
 import nl.buildtool.model.UpdatePomsParameters
 import nl.buildtool.views.utils.UtilsView
 import org.springframework.scheduling.annotation.Async
@@ -18,8 +19,12 @@ class PomFilePrefixExecutor(private val updatePomsUtil: UpdatePomsUtil) {
         jobExecutionParameter: UpdatePomsParameters
     ): CompletableFuture<Any>? = CompletableFuture.supplyAsync {
         try {
-            updatePomsUtil.updatePoms(jobExecutionParameter)
-
+            if (jobExecutionParameter.autoDetectCustomOrReset == RADIO_VALUE_RESET_POMS) {
+                updatePomsUtil.resetPoms(jobExecutionParameter)
+            } else {
+                updatePomsUtil.updatePoms(jobExecutionParameter)
+            }
+            
             ui.access {
                 utilsView.progressBar.isVisible = false
                 utilsView.executeButton.isVisible = true

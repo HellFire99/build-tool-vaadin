@@ -54,7 +54,7 @@ class UpdatePomsUtilTest {
     }
 
     @Test
-    fun `test updatePomVersieInDocument`() {
+    fun `test zetPrefixInPomDocumentVersion`() {
         // Prepare
         val pomFile = mapToPomFile(pomMetParentXmlFile)
             ?: throw Exception("Fout in junit test. Kon ${pomMetParentXmlFile.absolutePath} niet lezen.")
@@ -63,15 +63,14 @@ class UpdatePomsUtilTest {
         val prefix = "jUnit"
 
         // Test
-        updatePomsUtil.updatePomVersieInDocument(
-            pomFile = pomFile,
+        updatePomsUtil.zetPrefixInPomDocumentVersion(
             pomDocument = pomDocument,
             gewenstePomVersionPrefix = "jUnit"
         )
 
         // Verify
-        val NaReplaceVersionNode = getPomVersionNode(pomDocument)
-        assertThat(NaReplaceVersionNode?.firstChild?.nodeValue).isEqualTo("${prefix}-$startVersionText")
+        val naReplaceVersionNode = getPomVersionNode(pomDocument)
+        assertThat(naReplaceVersionNode?.firstChild?.nodeValue).isEqualTo("${prefix}-$startVersionText")
     }
 
     private fun deleteExistingFiles() {

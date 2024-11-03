@@ -34,7 +34,7 @@ class UtilsViewContent(private val pomFileDataProvider: PomFileDataProvider) {
     private lateinit var contentRowPrefixPomFiles: HorizontalLayout
     private var contentRowUpdateDependencies: HorizontalLayout? = null
     private lateinit var utilsView: UtilsView
-    lateinit var customOrAutoDetectPrefixRadio: RadioButtonGroup<String>
+    lateinit var autoDetectCustomOrResetRadio: RadioButtonGroup<String>
     lateinit var pomFileSelectRadio: RadioButtonGroup<String>
     lateinit var customPrefixTextfield: TextField
     lateinit var pomFileSelectionGrid: TreeGrid<PomFile>
@@ -73,8 +73,8 @@ class UtilsViewContent(private val pomFileDataProvider: PomFileDataProvider) {
         pomFileSelectRadio = RadioButtonGroup<String>()
         pomFileSelectRadio.setId("pomFileSelectRadio")
 
-        customOrAutoDetectPrefixRadio = RadioButtonGroup<String>()
-        customOrAutoDetectPrefixRadio.setId("customOrAutoDetectPrefixRadio")
+        autoDetectCustomOrResetRadio = RadioButtonGroup<String>()
+        autoDetectCustomOrResetRadio.setId("customOrAutoDetectPrefixRadio")
 
         val rightColumn = VerticalLayout()
         rightColumn.setId("rightColumn")
@@ -130,9 +130,9 @@ class UtilsViewContent(private val pomFileDataProvider: PomFileDataProvider) {
             evaluateExecuteButtonEnabling()
         }
 
-        customOrAutoDetectPrefixRadio.label = "Auto-detect or custom prefix"
-        customOrAutoDetectPrefixRadio.width = "min-content"
-        customOrAutoDetectPrefixRadio.setItems(
+        autoDetectCustomOrResetRadio.label = "Auto-detect or custom prefix"
+        autoDetectCustomOrResetRadio.width = "min-content"
+        autoDetectCustomOrResetRadio.setItems(
             RADIO_VALUE_AUTO_DETECT,
             RADIO_VALUE_CUSTOM_PREFIX,
             RADIO_VALUE_RESET_POMS
@@ -155,8 +155,8 @@ class UtilsViewContent(private val pomFileDataProvider: PomFileDataProvider) {
         autoDetectInfoMessage.width = "100%"
         autoDetectInfoMessage.setWidthFull()
 
-        customOrAutoDetectPrefixRadio.addThemeVariants(RadioGroupVariant.LUMO_VERTICAL)
-        customOrAutoDetectPrefixRadio.addValueChangeListener {
+        autoDetectCustomOrResetRadio.addThemeVariants(RadioGroupVariant.LUMO_VERTICAL)
+        autoDetectCustomOrResetRadio.addValueChangeListener {
             when (it.value) {
                 RADIO_VALUE_AUTO_DETECT -> {
                     autoDetectInfoMessage.value = MESSAGE_AUTO_DETECT_INFO
@@ -199,7 +199,7 @@ class UtilsViewContent(private val pomFileDataProvider: PomFileDataProvider) {
         mainRow.add(secondColumnVerticalLayout)
 
         middleColumn.add(pomFileSelectRadio)
-        middleColumn.add(customOrAutoDetectPrefixRadio)
+        middleColumn.add(autoDetectCustomOrResetRadio)
 
         contentRowPrefixPomFiles.add(middleColumn)
         contentRowPrefixPomFiles.add(rightColumn)
@@ -228,7 +228,7 @@ class UtilsViewContent(private val pomFileDataProvider: PomFileDataProvider) {
 
     private fun resetToDefaults() {
         this.pomFileSelectRadio.value = RADIO_VALUE_ALL_IN_WORSPACE
-        this.customOrAutoDetectPrefixRadio.value = RADIO_VALUE_AUTO_DETECT
+        this.autoDetectCustomOrResetRadio.value = RADIO_VALUE_AUTO_DETECT
         this.pomFileSelectionGrid.deselectAll()
     }
 
@@ -313,11 +313,11 @@ class UtilsViewContent(private val pomFileDataProvider: PomFileDataProvider) {
                 (this.pomFileSelectRadio.value == RADIO_VALUE_SELECTION && this.pomFileSelectionGrid.selectedItems.isNotEmpty())
 
     private fun customOrAutoDetectPrefixRadioIsValid() =
-        this.customOrAutoDetectPrefixRadio.value?.isNotEmpty() == true && customPrefixIsValid()
+        this.autoDetectCustomOrResetRadio.value?.isNotEmpty() == true && customPrefixIsValid()
 
     private fun customPrefixIsValid() =
-        this.customOrAutoDetectPrefixRadio.value != RADIO_VALUE_CUSTOM_PREFIX ||
-                (this.customOrAutoDetectPrefixRadio.value == RADIO_VALUE_CUSTOM_PREFIX &&
+        this.autoDetectCustomOrResetRadio.value != RADIO_VALUE_CUSTOM_PREFIX ||
+                (this.autoDetectCustomOrResetRadio.value == RADIO_VALUE_CUSTOM_PREFIX &&
                         this.customPrefixTextfield.value?.isNotEmpty() == true)
 
 }
