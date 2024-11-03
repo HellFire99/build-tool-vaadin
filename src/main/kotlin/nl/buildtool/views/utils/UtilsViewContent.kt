@@ -18,14 +18,19 @@ import com.vaadin.flow.data.value.ValueChangeMode
 import com.vaadin.flow.theme.lumo.LumoUtility
 import nl.buildtool.model.*
 import nl.buildtool.model.events.RefreshTableEvent
+import nl.buildtool.services.DependenciesUpdatesService
 import nl.buildtool.utils.ExtensionFunctions.logEvent
 import nl.buildtool.utils.GlobalEventBus
 import nl.buildtool.views.build.PomFileDataProvider
+import nl.buildtool.views.components.AutoDetectCustomOrResetRadio
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 
 @Component
-class UtilsViewContent(private val pomFileDataProvider: PomFileDataProvider) {
+class UtilsViewContent(
+    private val pomFileDataProvider: PomFileDataProvider,
+    private val dependenciesUpdatesService: DependenciesUpdatesService
+) {
     private val logger = LoggerFactory.getLogger(UtilsViewContent::class.java)
 
     private lateinit var mainRow: HorizontalLayout
@@ -34,7 +39,7 @@ class UtilsViewContent(private val pomFileDataProvider: PomFileDataProvider) {
     private lateinit var contentRowPrefixPomFiles: HorizontalLayout
     private var contentRowUpdateDependencies: HorizontalLayout? = null
     private lateinit var utilsView: UtilsView
-    lateinit var autoDetectCustomOrResetRadio: RadioButtonGroup<String>
+    lateinit var autoDetectCustomOrResetRadio: AutoDetectCustomOrResetRadio
     lateinit var pomFileSelectRadio: RadioButtonGroup<String>
     lateinit var customPrefixTextfield: TextField
     lateinit var pomFileSelectionGrid: TreeGrid<PomFile>
@@ -70,11 +75,31 @@ class UtilsViewContent(private val pomFileDataProvider: PomFileDataProvider) {
         val middleColumn = VerticalLayout()
         middleColumn.setId("middleColumn")
 
+        val autoDetectInfoMessage = TextArea()
+        autoDetectInfoMessage.setId("autoDetectInfo")
+        autoDetectInfoMessage.isReadOnly = true
+        autoDetectInfoMessage.label = LABEL_AUTO_DETECT_INFO
+        autoDetectInfoMessage.width = "100%"
+        autoDetectInfoMessage.setWidthFull()
+
+        customPrefixTextfield = TextField()
+        customPrefixTextfield.setId("customPrefixTextfield")
+        customPrefixTextfield.label = "Prefix"
+        customPrefixTextfield.width = "100%"
+        customPrefixTextfield.addValueChangeListener {
+            this.evaluateExecuteButtonEnabling()
+        }
+        customPrefixTextfield.valueChangeTimeout = 300
+        customPrefixTextfield.valueChangeMode = ValueChangeMode.LAZY
+
         pomFileSelectRadio = RadioButtonGroup<String>()
         pomFileSelectRadio.setId("pomFileSelectRadio")
 
-        autoDetectCustomOrResetRadio = RadioButtonGroup<String>()
-        autoDetectCustomOrResetRadio.setId("customOrAutoDetectPrefixRadio")
+        autoDetectCustomOrResetRadio = AutoDetectCustomOrResetRadio(
+            autoDetectInfoMessage = autoDetectInfoMessage,
+            customPrefixTextfield = customPrefixTextfield,
+            middleColumn = middleColumn,
+        ) { this.evaluateExecuteButtonEnabling() }
 
         val rightColumn = VerticalLayout()
         rightColumn.setId("rightColumn")
@@ -126,58 +151,6 @@ class UtilsViewContent(private val pomFileDataProvider: PomFileDataProvider) {
             } else if (it.value == RADIO_VALUE_ALL_IN_WORSPACE) {
                 rightColumn.remove(pomFileSelectionGrid)
                 pomFileSelectionGrid.deselectAll()
-            }
-            evaluateExecuteButtonEnabling()
-        }
-
-        autoDetectCustomOrResetRadio.label = "Auto-detect or custom prefix"
-        autoDetectCustomOrResetRadio.width = "min-content"
-        autoDetectCustomOrResetRadio.setItems(
-            RADIO_VALUE_AUTO_DETECT,
-            RADIO_VALUE_CUSTOM_PREFIX,
-            RADIO_VALUE_RESET_POMS
-        )
-
-        customPrefixTextfield = TextField()
-        customPrefixTextfield.setId("customPrefixTextfield")
-        customPrefixTextfield.label = "Prefix"
-        customPrefixTextfield.width = "100%"
-        customPrefixTextfield.addValueChangeListener {
-            this.evaluateExecuteButtonEnabling()
-        }
-        customPrefixTextfield.valueChangeTimeout = 300
-        customPrefixTextfield.valueChangeMode = ValueChangeMode.LAZY;
-
-        val autoDetectInfoMessage = TextArea()
-        autoDetectInfoMessage.setId("autoDetectInfo")
-        autoDetectInfoMessage.isReadOnly = true
-        autoDetectInfoMessage.label = LABEL_AUTO_DETECT_INFO
-        autoDetectInfoMessage.width = "100%"
-        autoDetectInfoMessage.setWidthFull()
-
-        autoDetectCustomOrResetRadio.addThemeVariants(RadioGroupVariant.LUMO_VERTICAL)
-        autoDetectCustomOrResetRadio.addValueChangeListener {
-            when (it.value) {
-                RADIO_VALUE_AUTO_DETECT -> {
-                    autoDetectInfoMessage.value = MESSAGE_AUTO_DETECT_INFO
-                    autoDetectInfoMessage.label = LABEL_AUTO_DETECT_INFO
-                    middleColumn.remove(customPrefixTextfield)
-                    middleColumn.add(autoDetectInfoMessage)
-                }
-
-                RADIO_VALUE_CUSTOM_PREFIX -> {
-                    middleColumn.remove(autoDetectInfoMessage)
-                    autoDetectInfoMessage.value = ""
-                    autoDetectInfoMessage.label = ""
-                    middleColumn.add(customPrefixTextfield)
-                }
-
-                RADIO_VALUE_RESET_POMS -> {
-                    autoDetectInfoMessage.value = MESSAGE_RESET_POMS
-                    autoDetectInfoMessage.label = LABEL_RESET_POMS
-                    middleColumn.remove(customPrefixTextfield)
-                    middleColumn.add(autoDetectInfoMessage)
-                }
             }
             evaluateExecuteButtonEnabling()
         }
@@ -258,6 +231,7 @@ class UtilsViewContent(private val pomFileDataProvider: PomFileDataProvider) {
         contentRowUpdateDependencies.width = "100%"
         contentRowUpdateDependencies.style["flex-grow"] = "1"
 
+        // Source/left
         val sourceColumn = VerticalLayout()
         sourceColumn.setId("sourceColumn")
         sourceColumn.addClassName(LumoUtility.Gap.XSMALL)
@@ -274,6 +248,7 @@ class UtilsViewContent(private val pomFileDataProvider: PomFileDataProvider) {
         sourceColumn.add(sourceText)
         sourceColumn.add(sourceGrid)
 
+        // Target/right
         val targetColumn = VerticalLayout()
         targetColumn.setId("targetColumn")
         targetColumn.addClassName(LumoUtility.Gap.XSMALL)
@@ -284,13 +259,18 @@ class UtilsViewContent(private val pomFileDataProvider: PomFileDataProvider) {
         targetColumn.style["flex-grow"] = "1"
         contentRowPrefixPomFiles.setFlexGrow(1.0, targetColumn)
 
-        val targetGrid = pomFileDataProvider.createTreeGrid()
         val targetText = H5("Target")
+        val targetGrid = pomFileDataProvider.createTreeGrid(selectable = false)
+
         targetColumn.add(targetText)
         targetColumn.add(targetGrid)
 
         contentRowUpdateDependencies.add(sourceColumn)
         contentRowUpdateDependencies.add(targetColumn)
+        this.dependenciesUpdatesService.setupDependenciesUpdater(
+            sourceGrid = sourceGrid,
+            targetGrid = targetGrid
+        )
         this.contentRowUpdateDependencies = contentRowUpdateDependencies
     }
 

@@ -1,3 +1,15 @@
 .padding-10{
     padding: 10px;
 }
+
+.nonSelectable {
+    & vaadin-checkbox{
+        pointer-events: none;
+        opacity: 50%;
+    }
+
+    &.v-grid-select-all-checkbox {
+        pointer-events: none;
+        opacity: 50%;
+    }
+}

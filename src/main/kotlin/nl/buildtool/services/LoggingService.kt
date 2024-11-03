@@ -7,9 +7,9 @@ import nl.buildtool.model.events.MavenLogEvent
 import nl.buildtool.utils.GlobalEventBus
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.InitializingBean
-import org.springframework.stereotype.Component
+import org.springframework.stereotype.Service
 
-@Component
+@Service
 class LoggingService : InitializingBean {
     private val logger = LoggerFactory.getLogger(LoggingService::class.java)
     private lateinit var loggingTextArea: TextArea
