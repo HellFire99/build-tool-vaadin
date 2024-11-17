@@ -10,7 +10,7 @@ import java.util.concurrent.CompletableFuture
 
 
 @Service
-class PomFilePrefixExecutor(private val updatePomsUtil: UpdatePomsUtil) {
+class PomFilePrefixExecutor(private val updatePomVersionUtil: UpdatePomVersionUtil) {
 
     @Async
     fun executePomPrefixingJob(
@@ -20,11 +20,11 @@ class PomFilePrefixExecutor(private val updatePomsUtil: UpdatePomsUtil) {
     ): CompletableFuture<Any>? = CompletableFuture.supplyAsync {
         try {
             if (jobExecutionParameter.autoDetectCustomOrReset == RADIO_VALUE_RESET_POMS) {
-                updatePomsUtil.resetPoms(jobExecutionParameter)
+                updatePomVersionUtil.resetPoms(jobExecutionParameter)
             } else {
-                updatePomsUtil.updatePoms(jobExecutionParameter)
+                updatePomVersionUtil.updatePoms(jobExecutionParameter)
             }
-            
+
             ui.access {
                 utilsView.progressBar.isVisible = false
                 utilsView.executeButton.isVisible = true

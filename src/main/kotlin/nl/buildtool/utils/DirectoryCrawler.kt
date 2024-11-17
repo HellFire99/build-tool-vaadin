@@ -3,7 +3,7 @@ package nl.buildtool.utils
 
 import nl.buildtool.maven.BuildToolMavenInvoker
 import nl.buildtool.model.PomFile
-import nl.buildtool.model.PomFileConverter.mapToPomFile
+import nl.buildtool.model.converter.PomFileConverter.mapToPomFile
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
@@ -14,6 +14,10 @@ const val XPATH_VERSION = "/project/version"
 const val XPATH_VERSION_PARENT = "/project/parent/version"
 const val XPATH_GROUP_ID = "/project/groupId"
 const val XPATH_MODULES = "/project/modules/module"
+const val XPATH_DEPENDENCIES = "/project/dependencies/dependency"
+const val GROUP_ID = "groupId"
+const val ARTIFACT_ID = "artifactId"
+const val VERSION = "version"
 
 @Component
 class DirectoryCrawler {

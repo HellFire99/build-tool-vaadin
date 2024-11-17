@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>nl.service.a</groupId>
+    <artifactId>service-a</artifactId>
+    <version>2.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+    <properties>
+        <maven.invoker.version>3.0.1</maven.invoker.version>
+    </properties>
+    <dependencies>
+        <dependency>
+            <groupId>nl.service.b</groupId>
+            <artifactId>service-b</artifactId>
+        </dependency>
+    </dependencies>
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>nl.service.bA</groupId>
+                <artifactId>service-bA</artifactId>
+                <version>1.01</version>
+            </dependency>
+            <dependency>
+                <groupId>nl.service.b</groupId>
+                <artifactId>service-b</artifactId>
+                <version>1.01-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>nl.service.bX</groupId>
+                <artifactId>service-bX</artifactId>
+                <version>1.01</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+</project>

@@ -3,7 +3,7 @@ package nl.buildtool.utils
 import com.google.common.base.Stopwatch
 import nl.buildtool.git.getGitBranchName
 import nl.buildtool.model.*
-import nl.buildtool.model.PomFileConverter.readXml
+import nl.buildtool.model.converter.PomFileConverter.readXml
 import nl.buildtool.model.events.RefreshTableEvent
 import nl.buildtool.utils.ExtensionFunctions.logEvent
 import nl.buildtool.utils.ExtensionFunctions.post
@@ -18,8 +18,9 @@ import javax.xml.transform.stream.StreamResult
 import javax.xml.xpath.XPathConstants.NODE
 import javax.xml.xpath.XPathFactory
 
+// TODO
 @Component
-class UpdatePomsUtil {
+class UpdatePomDependenciesUtil {
     @Value("\${root:.}")
     lateinit var root: String
 

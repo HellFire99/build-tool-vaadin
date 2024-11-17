@@ -1,8 +1,9 @@
 package nl.buildtool.utils
 
-import nl.buildtool.model.PomFileConverter.mapToPomFile
-import nl.buildtool.model.PomFileConverter.readXml
-import nl.buildtool.utils.UpdatePomsUtil.Companion.getPomVersionNode
+import nl.buildtool.model.converter.PomFileConverter.mapToPomFile
+import nl.buildtool.model.converter.PomFileConverter.readXml
+import nl.buildtool.utils.FileUtil.getFile
+import nl.buildtool.utils.UpdatePomVersionUtil.Companion.getPomVersionNode
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
@@ -11,8 +12,8 @@ import java.io.File
 import java.nio.file.Paths
 import kotlin.io.path.deleteIfExists
 
-class UpdatePomsUtilTest {
-    private lateinit var updatePomsUtil: UpdatePomsUtil
+class UpdatePomVersionUtilTest {
+    private lateinit var updatePomVersionUtil: UpdatePomVersionUtil
     private val pomMetParentFileName = "pom_met_parent.xml"
     private val pomZonderParentFileName = "pom_zonder_parent.xml"
 
@@ -22,7 +23,6 @@ class UpdatePomsUtilTest {
     private lateinit var pomMetParentXmlFile: File
     private lateinit var pomZonderParentXmlFile: File
 
-
     @BeforeEach
     fun beforeEach1() {
         deleteExistingFiles()
@@ -30,13 +30,10 @@ class UpdatePomsUtilTest {
 
     @BeforeEach
     fun beforeEach2() {
-        updatePomsUtil = UpdatePomsUtil()
+        updatePomVersionUtil = UpdatePomVersionUtil()
         // Copy pom files for test
-        val resourcePomMetParent = this::class.java.getResource("/$pomMetParentFileName")!!
-        val resourcePomZonderParent = this::class.java.getResource("/$pomZonderParentFileName")!!
-
-        pomMetParentXmlFile = File(resourcePomMetParent.path)
-        pomZonderParentXmlFile = File(resourcePomZonderParent.path)
+        pomMetParentXmlFile = getFile(pomMetParentFileName)
+        pomZonderParentXmlFile = getFile(pomZonderParentFileName)
         val dir = pomMetParentXmlFile.parent
 
         pomMetParentXmlFile.copyTo(
@@ -63,7 +60,7 @@ class UpdatePomsUtilTest {
         val prefix = "jUnit"
 
         // Test
-        updatePomsUtil.zetPrefixInPomDocumentVersion(
+        updatePomVersionUtil.zetPrefixInPomDocumentVersion(
             pomDocument = pomDocument,
             gewenstePomVersionPrefix = "jUnit"
         )

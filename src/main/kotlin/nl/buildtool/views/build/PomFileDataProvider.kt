@@ -7,7 +7,10 @@ import com.vaadin.flow.data.provider.hierarchy.TreeData
 import com.vaadin.flow.data.provider.hierarchy.TreeDataProvider
 import nl.buildtool.model.Globals
 import nl.buildtool.model.PomFile
+import nl.buildtool.model.events.PomFileDeselectedEvent
+import nl.buildtool.model.events.PomFileSelectedEvent
 import nl.buildtool.utils.DirectoryCrawler
+import nl.buildtool.utils.ExtensionFunctions.post
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 
@@ -17,11 +20,13 @@ class PomFileDataProvider(private val directoryCrawler: DirectoryCrawler) {
 
     fun createTreeGrid(
         update: Boolean = false,
-        selectable: Boolean = true
+        selectable: Boolean = true,
+        fireEvents: Boolean = false
     ): TreeGrid<PomFile> {
         val treeGrid = TreeGrid<PomFile>()
         treeGrid.height = "100%"
         treeGrid.width = "100%"
+        treeGrid.className = "smaller-font"
         val dataProvider = dataProvider(update)
         treeGrid.setDataProvider(dataProvider)
         treeGrid.addHierarchyColumn(PomFile::artifactId).setHeader("ArtifactId")
@@ -30,7 +35,11 @@ class PomFileDataProvider(private val directoryCrawler: DirectoryCrawler) {
         treeGrid.setSelectionMode(Grid.SelectionMode.MULTI)
 
         treeGrid.asMultiSelect().addValueChangeListener { event ->
-            updateSelected(event, treeGrid)
+            updateSelected(
+                event = event,
+                treeGrid = treeGrid,
+                fireEvents = fireEvents
+            )
         }
 
         if (!selectable) {
@@ -65,14 +74,15 @@ class PomFileDataProvider(private val directoryCrawler: DirectoryCrawler) {
 
     private fun updateSelected(
         event: AbstractField.ComponentValueChangeEvent<Grid<PomFile>, MutableSet<PomFile>>?,
-        treeGrid: TreeGrid<PomFile>
+        treeGrid: TreeGrid<PomFile>,
+        fireEvents: Boolean = false
     ) {
         event?.let {
             if (event.value.size > event.oldValue.size) {
                 // Items aangevinkt
-                updateSelected(event.value, treeGrid)
+                updateSelected(event.value, treeGrid, fireEvents)
             } else if (event.value.size < event.oldValue.size) {
-                updateDeselected(event, treeGrid)
+                updateDeselected(event, treeGrid, fireEvents)
             }
         }
         treeGrid.dataProvider.refreshAll()
@@ -84,19 +94,26 @@ class PomFileDataProvider(private val directoryCrawler: DirectoryCrawler) {
 
     fun updateSelected(
         pomfileSelection: MutableSet<PomFile>,
-        treeGrid: TreeGrid<PomFile>
+        treeGrid: TreeGrid<PomFile>,
+        fireEvents: Boolean = false
     ) {
         if (pomfileSelection.isNotEmpty()) {
             // select selection
-            pomfileSelection.forEach {
+            pomfileSelection.filter { !it.checked }.forEach {
                 val alleGlobalPoms = Globals.pomFileList + Globals.pomFileList.flatMap { it.modulePoms.values }
                 val globalPomFile = alleGlobalPoms.firstOrNull { pomFile -> pomFile.artifactId == it.artifactId }
                 globalPomFile?.checked = true
+
                 if (globalPomFile?.modulePoms?.isNotEmpty() == true) {
                     // Select children in treeGrid
                     globalPomFile.modulePoms.values.forEach { pomFile ->
                         treeGrid.selectionModel.select(pomFile)
                     }
+                }
+
+                globalPomFile?.let {
+                    logger.info("Afvuren PomFileSelectedEvent. ${it.artifactId}")
+                    post(PomFileSelectedEvent(it))
                 }
             }
         }
@@ -104,7 +121,8 @@ class PomFileDataProvider(private val directoryCrawler: DirectoryCrawler) {
 
     fun updateDeselected(
         event: AbstractField.ComponentValueChangeEvent<Grid<PomFile>, MutableSet<PomFile>>?,
-        treeGrid: TreeGrid<PomFile>
+        treeGrid: TreeGrid<PomFile>,
+        fireEvents: Boolean = false
     ) {
         // Items uitgevinkt
         event?.let {
@@ -113,7 +131,7 @@ class PomFileDataProvider(private val directoryCrawler: DirectoryCrawler) {
             oldValues.removeAll(values)
             logger.info("Deselected items: ${oldValues.joinToString { it.artifactId }}")
 
-            oldValues.forEach { oldValuePomFile ->
+            oldValues.filter { it.checked }.forEach { oldValuePomFile ->
                 val alleGlobalPoms = Globals.pomFileList + Globals.pomFileList.flatMap { it.modulePoms.values }
                 val globalPomFile =
                     alleGlobalPoms.firstOrNull { pomFile -> pomFile.artifactId == oldValuePomFile.artifactId }
@@ -125,6 +143,10 @@ class PomFileDataProvider(private val directoryCrawler: DirectoryCrawler) {
                     globalPomFile.modulePoms.values.forEach { pomFile ->
                         treeGrid.selectionModel.deselect(pomFile)
                     }
+                }
+                globalPomFile?.let {
+                    logger.info("Afvuren PomFileDeselectedEvent. ${it.artifactId}")
+                    post(PomFileDeselectedEvent(it))
                 }
             }
 

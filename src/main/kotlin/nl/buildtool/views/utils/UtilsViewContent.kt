@@ -182,6 +182,8 @@ class UtilsViewContent(
         GlobalEventBus.eventBus.register(this)
 
         ui = UI.getCurrent()
+        
+        setupUpdateDependenciesContent()
 
         resetToDefaults()
     }
@@ -206,17 +208,12 @@ class UtilsViewContent(
     }
 
     private fun updateDependenciesButtonClicked() {
-        logger.info("updateDependenciesButtonClicked")
         logEvent("Update dependencies button clicked")
         subTitle.text = "Update dependencies"
 
         // Verwijder Prefix pom files content
+        secondColumnVerticalLayout.remove(contentRowUpdateDependencies)
         secondColumnVerticalLayout.remove(contentRowPrefixPomFiles)
-
-        if (contentRowUpdateDependencies == null) {
-            setupUpdateDependenciesContent()
-        }
-
         secondColumnVerticalLayout.add(contentRowUpdateDependencies)
     }
 
@@ -230,46 +227,31 @@ class UtilsViewContent(
         contentRowUpdateDependencies.addClassName(LumoUtility.Padding.XSMALL)
         contentRowUpdateDependencies.width = "100%"
         contentRowUpdateDependencies.style["flex-grow"] = "1"
+        contentRowUpdateDependencies.style["padding"] = "0"
 
         // Source/left
-        val sourceColumn = VerticalLayout()
-        sourceColumn.setId("sourceColumn")
-        sourceColumn.addClassName(LumoUtility.Gap.XSMALL)
-        sourceColumn.addClassName(LumoUtility.Padding.XSMALL)
-        sourceColumn.style["flex-grow"] = "1"
-        sourceColumn.width = "250px"
-        sourceColumn.setWidthFull()
-        sourceColumn.style["flex-grow"] = "1"
-        contentRowPrefixPomFiles.setFlexGrow(1.0, sourceColumn)
-
-        val sourceText = H5("Source")
-        val sourceGrid = pomFileDataProvider.createTreeGrid()
-
-        sourceColumn.add(sourceText)
-        sourceColumn.add(sourceGrid)
+        val sourceGrid = pomFileDataProvider.createTreeGrid(fireEvents = true)
+        val sourceColumn = createVerticalLayout(
+            id = "sourceColumn",
+            label = "Source",
+            treeGrid = sourceGrid
+        )
 
         // Target/right
-        val targetColumn = VerticalLayout()
-        targetColumn.setId("targetColumn")
-        targetColumn.addClassName(LumoUtility.Gap.XSMALL)
-        targetColumn.addClassName(LumoUtility.Padding.XSMALL)
-        targetColumn.style["flex-grow"] = "1"
-        targetColumn.width = "250px"
-        targetColumn.setWidthFull()
-        targetColumn.style["flex-grow"] = "1"
-        contentRowPrefixPomFiles.setFlexGrow(1.0, targetColumn)
-
-        val targetText = H5("Target")
         val targetGrid = pomFileDataProvider.createTreeGrid(selectable = false)
-
-        targetColumn.add(targetText)
-        targetColumn.add(targetGrid)
+        val targetColumn = createVerticalLayout(
+            id = "targetColumn",
+            label = "Target",
+            treeGrid = targetGrid
+        )
 
         contentRowUpdateDependencies.add(sourceColumn)
         contentRowUpdateDependencies.add(targetColumn)
+
         this.dependenciesUpdatesService.setupDependenciesUpdater(
             sourceGrid = sourceGrid,
-            targetGrid = targetGrid
+            targetGrid = targetGrid,
+            ui = ui
         )
         this.contentRowUpdateDependencies = contentRowUpdateDependencies
     }
@@ -285,7 +267,28 @@ class UtilsViewContent(
             pomFileSelectionGrid.treeData = pomFileDataProvider.dataProvider(true).treeData
             pomFileSelectionGrid.refresh()
         }
+    }
 
+    private fun createVerticalLayout(
+        id: String,
+        label: String,
+        treeGrid: TreeGrid<PomFile>
+    ): VerticalLayout {
+        val column = VerticalLayout()
+        column.setId(id)
+        column.addClassName(LumoUtility.Gap.XSMALL)
+        column.addClassName(LumoUtility.Padding.XSMALL)
+        column.width = "250px"
+        column.setWidthFull()
+        column.style["flex-grow"] = "1"
+        column.style["padding"] = "0"
+        contentRowPrefixPomFiles.setFlexGrow(1.0, column)
+
+        val h5 = H5(label)
+
+        column.add(h5)
+        column.add(treeGrid)
+        return column
     }
 
     private fun pomFileSelectRadioIsValid() =

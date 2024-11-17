@@ -17,7 +17,8 @@ class PomFile(
     var durationOfLastBuild: Duration? = null,
     var status: BuildStatus = BuildStatus.NONE,
     var triggerReload: Boolean? = false,
-    var modules: List<String>? = emptyList()
+    var modules: List<String>? = emptyList(),
+    var pomDependencies: List<PomDependency>? = emptyList()
 ) {
     var executionException: CommandLineException? = null
     var modulePoms = mapOf<String, PomFile>()
@@ -74,6 +75,11 @@ class PomFile(
     }
 
     override fun toString(): String {
-        return "PomFile(name='$artifactId', version='$version', file=$file, dir=${file.parent}, modules=${modules?.joinToString()})"
+        return "PomFile(name='$artifactId', " +
+                "version='$version', " +
+                "file=$file, " +
+                "dir=${file.parent}, " +
+                "modules=${modules?.joinToString()}," +
+                "dependencies=${pomDependencies?.joinToString()})"
     }
 }
