@@ -16,7 +16,13 @@ import com.vaadin.flow.component.textfield.TextField
 import com.vaadin.flow.component.treegrid.TreeGrid
 import com.vaadin.flow.data.value.ValueChangeMode
 import com.vaadin.flow.theme.lumo.LumoUtility
-import nl.buildtool.model.*
+import nl.buildtool.model.LABEL_AUTO_DETECT_INFO
+import nl.buildtool.model.PomFile
+import nl.buildtool.model.RADIO_VALUE_ALL_IN_WORSPACE
+import nl.buildtool.model.RADIO_VALUE_AUTO_DETECT
+import nl.buildtool.model.RADIO_VALUE_CUSTOM_PREFIX
+import nl.buildtool.model.RADIO_VALUE_SELECTION
+import nl.buildtool.model.UtilsMode
 import nl.buildtool.model.events.RefreshTableEvent
 import nl.buildtool.services.DependenciesUpdatesService
 import nl.buildtool.utils.ExtensionFunctions.logEvent
@@ -29,8 +35,7 @@ import org.springframework.stereotype.Component
 @Component
 class UtilsViewContent(
     private val pomFileDataProvider: PomFileDataProvider,
-    private val dependenciesUpdatesService: DependenciesUpdatesService
-) {
+    private val dependenciesUpdatesService: DependenciesUpdatesService) {
     private val logger = LoggerFactory.getLogger(UtilsViewContent::class.java)
 
     private lateinit var mainRow: HorizontalLayout
@@ -44,6 +49,7 @@ class UtilsViewContent(
     lateinit var customPrefixTextfield: TextField
     lateinit var pomFileSelectionGrid: TreeGrid<PomFile>
     lateinit var ui: UI
+    var utilsMode = UtilsMode.UPDATE_POM_VERSIONS
 
     fun initContent(utilsView: UtilsView) {
         this.utilsView = utilsView
@@ -98,8 +104,7 @@ class UtilsViewContent(
         autoDetectCustomOrResetRadio = AutoDetectCustomOrResetRadio(
             autoDetectInfoMessage = autoDetectInfoMessage,
             customPrefixTextfield = customPrefixTextfield,
-            middleColumn = middleColumn,
-        ) { this.evaluateExecuteButtonEnabling() }
+            middleColumn = middleColumn) { this.evaluateExecuteButtonEnabling() }
 
         val rightColumn = VerticalLayout()
         rightColumn.setId("rightColumn")
@@ -182,7 +187,7 @@ class UtilsViewContent(
         GlobalEventBus.eventBus.register(this)
 
         ui = UI.getCurrent()
-        
+
         setupUpdateDependenciesContent()
 
         resetToDefaults()
@@ -190,6 +195,7 @@ class UtilsViewContent(
 
     private fun prefixPomsButtonClicked() {
         logger.info("prefixPomsButtonClicked")
+        utilsMode = UtilsMode.UPDATE_POM_VERSIONS
         logEvent("Prefix Poms button clicked")
         subTitle.text = "Prefix pom files"
 
@@ -209,6 +215,7 @@ class UtilsViewContent(
 
     private fun updateDependenciesButtonClicked() {
         logEvent("Update dependencies button clicked")
+        utilsMode = UtilsMode.UPDATE_DEPENDENCIES
         subTitle.text = "Update dependencies"
 
         // Verwijder Prefix pom files content
@@ -235,7 +242,7 @@ class UtilsViewContent(
             id = "sourceColumn",
             label = "Source",
             treeGrid = sourceGrid
-        )
+                                               )
 
         // Target/right
         val targetGrid = pomFileDataProvider.createTreeGrid(selectable = false)
@@ -243,7 +250,7 @@ class UtilsViewContent(
             id = "targetColumn",
             label = "Target",
             treeGrid = targetGrid
-        )
+                                               )
 
         contentRowUpdateDependencies.add(sourceColumn)
         contentRowUpdateDependencies.add(targetColumn)
@@ -252,7 +259,7 @@ class UtilsViewContent(
             sourceGrid = sourceGrid,
             targetGrid = targetGrid,
             ui = ui
-        )
+                                                                )
         this.contentRowUpdateDependencies = contentRowUpdateDependencies
     }
 
@@ -273,7 +280,7 @@ class UtilsViewContent(
         id: String,
         label: String,
         treeGrid: TreeGrid<PomFile>
-    ): VerticalLayout {
+                                    ): VerticalLayout {
         val column = VerticalLayout()
         column.setId(id)
         column.addClassName(LumoUtility.Gap.XSMALL)

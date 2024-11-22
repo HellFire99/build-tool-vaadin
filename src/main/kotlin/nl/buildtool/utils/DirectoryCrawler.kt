@@ -36,6 +36,7 @@ class DirectoryCrawler {
             .toList()
             .sortedBy { it.artifactId }
         pomFilesFound.forEach { logger.info(it.toString()) }
+
         val pomFilesMetModules = createModulePoms(pomFilesFound)
         logger.info("${pomFilesFound.size} Pom files found. ")
         logger.info("${pomFilesMetModules.size} Pom files met modules found. ")
@@ -50,8 +51,10 @@ class DirectoryCrawler {
             it.modules?.forEach { moduleNaam ->
                 val gezochteModulePomDirNaam = "$moduleParentPomDir${File.separator}$moduleNaam"
                 val gezochteModulePomFile =
-                    pomFiles.first { pomFile -> pomFile.file.parent == gezochteModulePomDirNaam }
-                moduleMap[moduleNaam] = gezochteModulePomFile
+                    pomFiles.firstOrNull { pomFile -> pomFile.file.parent == gezochteModulePomDirNaam }
+                gezochteModulePomFile?.let {
+                    moduleMap[moduleNaam] = it
+                }
             }
 
             it.modulePoms = moduleMap

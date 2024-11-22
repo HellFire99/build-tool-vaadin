@@ -23,7 +23,7 @@ class DependenciesUpdatesService : InitializingBean {
         sourceGrid: TreeGrid<PomFile>,
         targetGrid: TreeGrid<PomFile>,
         ui: UI
-    ) {
+                                ) {
         this.sourceGrid = sourceGrid
         this.targetGrid = targetGrid
         this.ui = ui
@@ -33,8 +33,21 @@ class DependenciesUpdatesService : InitializingBean {
     private fun subscribe(event: PomFileDeselectedEvent) {
         logger.info("PomFileDeselectedEvent ontvangen. ${event.pomFile.artifactId}")
         ui.access {
-            // TODO opzoeken dependencies obv artifactId/groupId
+            val dependentPomFiles = findPomFiles(
+                treeGrid = targetGrid,
+                artifactId = event.pomFile.artifactId,
+                groupId = event.pomFile.groupId
+                                                )
+            dependentPomFiles.let {
+                dependentPomFiles.forEach { dependentPomFile ->
+                    targetGrid.deselect(dependentPomFile)
 
+                    val parent = targetGrid.treeData.getParent(dependentPomFile)
+                    if (parent != null) {
+                        targetGrid.deselect(parent)
+                    }
+                }
+            }
         }
     }
 
@@ -43,15 +56,19 @@ class DependenciesUpdatesService : InitializingBean {
         logger.info("PomFileSelectedEvent ontvangen. ${event.pomFile.artifactId}")
         // zoek in target obv artifactId en groupId
         ui.access {
-            // TODO opzoeken dependencies obv artifactId/groupId
             val dependentPomFiles = findPomFiles(
                 treeGrid = targetGrid,
                 artifactId = event.pomFile.artifactId,
                 groupId = event.pomFile.groupId
-            )
+                                                )
             dependentPomFiles.let {
                 dependentPomFiles.forEach { dependentPomFile ->
                     targetGrid.select(dependentPomFile)
+
+                    val parent = targetGrid.treeData.getParent(dependentPomFile)
+                    if (parent != null) {
+                        targetGrid.select(parent)
+                    }
                 }
             }
         }
@@ -79,7 +96,7 @@ class DependenciesUpdatesService : InitializingBean {
         pomFile: PomFile,
         artifactId: String,
         groupId: String
-    ): PomDependency? {
+                             ): PomDependency? {
         val dependencyAanwezig = pomFile.pomDependencies?.firstOrNull { pomDependency ->
             pomDependency.artifactId == artifactId && pomDependency.groupId == groupId
         }

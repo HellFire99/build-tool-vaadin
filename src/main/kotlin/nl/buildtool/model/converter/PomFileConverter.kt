@@ -60,18 +60,23 @@ object PomFileConverter {
     }
 
     private fun extractListValue(pomXmlDoc: Document, xpathString: String): List<String> {
-        val xpath = XPathFactory.newInstance().newXPath()
-        val expr = xpath.compile(xpathString)
-        val nodes = expr.evaluate(pomXmlDoc, XPathConstants.NODESET) as NodeList
-        return if (nodes.length > 0) {
-            val nodesList = mutableListOf<String>()
-            for (i in 0..<nodes.length) {
-                nodesList.add(nodes.item(i).textContent)
+        try {
+            val xpath = XPathFactory.newInstance().newXPath()
+            val expr = xpath.compile(xpathString)
+            val nodes = expr.evaluate(pomXmlDoc, XPathConstants.NODESET) as NodeList?
+            return if (nodes != null && nodes.length > 0) {
+                val nodesList = mutableListOf<String>()
+                for (i in 0..<nodes.length) {
+                    nodesList.add(nodes.item(i).textContent)
+                }
+                nodesList
+            } else {
+                emptyList()
             }
-            nodesList
-        } else {
-            emptyList()
+        }catch (e:Exception){
+            logger.error(e.message, e)
         }
+        return emptyList()
     }
 
     private fun extractDependencies(pomXmlDoc: Document, xpathString: String): List<PomDependency> {
