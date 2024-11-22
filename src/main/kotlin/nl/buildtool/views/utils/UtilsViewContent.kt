@@ -16,26 +16,23 @@ import com.vaadin.flow.component.textfield.TextField
 import com.vaadin.flow.component.treegrid.TreeGrid
 import com.vaadin.flow.data.value.ValueChangeMode
 import com.vaadin.flow.theme.lumo.LumoUtility
-import nl.buildtool.model.LABEL_AUTO_DETECT_INFO
-import nl.buildtool.model.PomFile
-import nl.buildtool.model.RADIO_VALUE_ALL_IN_WORSPACE
-import nl.buildtool.model.RADIO_VALUE_AUTO_DETECT
-import nl.buildtool.model.RADIO_VALUE_CUSTOM_PREFIX
-import nl.buildtool.model.RADIO_VALUE_SELECTION
-import nl.buildtool.model.UtilsMode
+import nl.buildtool.model.*
 import nl.buildtool.model.events.RefreshTableEvent
 import nl.buildtool.services.DependenciesUpdatesService
 import nl.buildtool.utils.ExtensionFunctions.logEvent
 import nl.buildtool.utils.GlobalEventBus
 import nl.buildtool.views.build.PomFileDataProvider
 import nl.buildtool.views.components.AutoDetectCustomOrResetRadio
+import nl.buildtool.views.model.ViewModel
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 
 @Component
 class UtilsViewContent(
     private val pomFileDataProvider: PomFileDataProvider,
-    private val dependenciesUpdatesService: DependenciesUpdatesService) {
+    private val dependenciesUpdatesService: DependenciesUpdatesService,
+    private val viewModel: ViewModel
+) {
     private val logger = LoggerFactory.getLogger(UtilsViewContent::class.java)
 
     private lateinit var mainRow: HorizontalLayout
@@ -104,7 +101,8 @@ class UtilsViewContent(
         autoDetectCustomOrResetRadio = AutoDetectCustomOrResetRadio(
             autoDetectInfoMessage = autoDetectInfoMessage,
             customPrefixTextfield = customPrefixTextfield,
-            middleColumn = middleColumn) { this.evaluateExecuteButtonEnabling() }
+            middleColumn = middleColumn
+        ) { this.evaluateExecuteButtonEnabling() }
 
         val rightColumn = VerticalLayout()
         rightColumn.setId("rightColumn")
@@ -242,7 +240,7 @@ class UtilsViewContent(
             id = "sourceColumn",
             label = "Source",
             treeGrid = sourceGrid
-                                               )
+        )
 
         // Target/right
         val targetGrid = pomFileDataProvider.createTreeGrid(selectable = false)
@@ -250,16 +248,19 @@ class UtilsViewContent(
             id = "targetColumn",
             label = "Target",
             treeGrid = targetGrid
-                                               )
+        )
 
         contentRowUpdateDependencies.add(sourceColumn)
         contentRowUpdateDependencies.add(targetColumn)
 
-        this.dependenciesUpdatesService.setupDependenciesUpdater(
+        this.viewModel.init(
             sourceGrid = sourceGrid,
-            targetGrid = targetGrid,
+            targetGrid = targetGrid
+        )
+        
+        this.dependenciesUpdatesService.setupDependenciesUpdater(
             ui = ui
-                                                                )
+        )
         this.contentRowUpdateDependencies = contentRowUpdateDependencies
     }
 
@@ -280,7 +281,7 @@ class UtilsViewContent(
         id: String,
         label: String,
         treeGrid: TreeGrid<PomFile>
-                                    ): VerticalLayout {
+    ): VerticalLayout {
         val column = VerticalLayout()
         column.setId(id)
         column.addClassName(LumoUtility.Gap.XSMALL)

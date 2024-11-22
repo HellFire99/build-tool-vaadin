@@ -3,6 +3,7 @@ package nl.buildtool.model.converter
 import nl.buildtool.model.PomDependency
 import nl.buildtool.model.PomFile
 import nl.buildtool.utils.*
+import nl.buildtool.utils.ExtensionFunctions.logEvent
 import org.slf4j.LoggerFactory
 import org.w3c.dom.Document
 import org.w3c.dom.Element
@@ -10,6 +11,9 @@ import org.w3c.dom.Node
 import org.w3c.dom.NodeList
 import java.io.File
 import javax.xml.parsers.DocumentBuilderFactory
+import javax.xml.transform.TransformerFactory
+import javax.xml.transform.dom.DOMSource
+import javax.xml.transform.stream.StreamResult
 import javax.xml.xpath.XPathConstants
 import javax.xml.xpath.XPathFactory
 
@@ -73,7 +77,7 @@ object PomFileConverter {
             } else {
                 emptyList()
             }
-        }catch (e:Exception){
+        } catch (e: Exception) {
             logger.error(e.message, e)
         }
         return emptyList()
@@ -159,5 +163,15 @@ object PomFileConverter {
         val xmlDoc: Document = documentBuilder.parse(xmlFile)
         xmlDoc.documentElement.normalize()
         return xmlDoc
+    }
+
+    fun writeXml(pomFile: File, pomDocument: Document) {
+        pomDocument.xmlStandalone = true
+        val transformerFactory = TransformerFactory.newInstance()
+        val transformer = transformerFactory.newTransformer()
+        val source = DOMSource(pomDocument)
+        val result = StreamResult(pomFile)
+        transformer.transform(source, result)
+        logEvent(" --> POM file Created: $pomFile")
     }
 }

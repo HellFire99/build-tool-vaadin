@@ -4,6 +4,7 @@ import com.google.common.base.Stopwatch
 import nl.buildtool.git.getGitBranchName
 import nl.buildtool.model.*
 import nl.buildtool.model.converter.PomFileConverter.readXml
+import nl.buildtool.model.converter.PomFileConverter.writeXml
 import nl.buildtool.model.events.RefreshTableEvent
 import nl.buildtool.utils.ExtensionFunctions.logEvent
 import nl.buildtool.utils.ExtensionFunctions.post
@@ -11,10 +12,6 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import org.w3c.dom.Document
 import org.w3c.dom.Element
-import java.io.File
-import javax.xml.transform.TransformerFactory
-import javax.xml.transform.dom.DOMSource
-import javax.xml.transform.stream.StreamResult
 import javax.xml.xpath.XPathConstants.NODE
 import javax.xml.xpath.XPathFactory
 
@@ -80,7 +77,6 @@ class UpdatePomVersionUtil {
         // trigger reload when poms have been updated and reset reloadTrigger
         doReloadPomList(updatePomsParameters.selectedPomFiles?.toSet().orEmpty())
     }
-
 
     fun zetPrefixInPomDocumentVersion(pomDocument: Document, gewenstePomVersionPrefix: String) {
         val versionNode = getPomVersionNode(pomDocument)
@@ -185,16 +181,6 @@ class UpdatePomVersionUtil {
             writeXml(pomFile.file, pomDocument)
             pomFile.triggerReload = true
         }
-    }
-
-    private fun writeXml(pomFile: File, pomDocument: Document) {
-        pomDocument.xmlStandalone = true
-        val transformerFactory = TransformerFactory.newInstance()
-        val transformer = transformerFactory.newTransformer()
-        val source = DOMSource(pomDocument)
-        val result = StreamResult(pomFile)
-        transformer.transform(source, result)
-        logEvent(" --> POM file Created: $pomFile")
     }
 
     private fun bepaalTeUpdatenPomFiles(updatePomsParameters: UpdatePomsParameters): Set<PomFile> {

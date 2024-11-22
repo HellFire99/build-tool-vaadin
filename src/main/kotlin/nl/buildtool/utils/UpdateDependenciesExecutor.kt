@@ -1,6 +1,7 @@
 package nl.buildtool.utils
 
 import com.vaadin.flow.component.UI
+import nl.buildtool.services.DependenciesUpdatesService
 import nl.buildtool.views.utils.UtilsView
 import org.slf4j.LoggerFactory
 import org.springframework.scheduling.annotation.Async
@@ -9,17 +10,16 @@ import java.util.concurrent.CompletableFuture
 
 
 @Service
-class UpdateDependenciesExecutor(private val updatePomVersionUtil: UpdatePomVersionUtil) {
+class UpdateDependenciesExecutor(private val dependenciesUpdatesService: DependenciesUpdatesService) {
     private val logger = LoggerFactory.getLogger(this::class.java)
 
     @Async
     fun executeJob(
         ui: UI,
-        utilsView: UtilsView): CompletableFuture<Any>? = CompletableFuture.supplyAsync {
+        utilsView: UtilsView
+    ): CompletableFuture<Any>? = CompletableFuture.supplyAsync {
         try {
-            Thread.sleep(2000)
-
-            // TODO implementeer update dependencies
+            dependenciesUpdatesService.updateDependencies()
 
             ui.access {
                 utilsView.progressBar.isVisible = false
