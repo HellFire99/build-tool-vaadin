@@ -24,7 +24,6 @@ class PomFileDataProvider(private val directoryCrawler: DirectoryCrawler) {
         fireEvents: Boolean = false
     ): TreeGrid<PomFile> {
         val treeGrid = TreeGrid<PomFile>()
-        treeGrid.height = "100%"
         treeGrid.width = "100%"
         treeGrid.className = "smaller-font"
         val dataProvider = dataProvider(update)
