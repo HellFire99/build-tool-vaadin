@@ -35,11 +35,13 @@ class PomFileDataProvider(private val directoryCrawler: DirectoryCrawler) {
         treeGrid.setSelectionMode(Grid.SelectionMode.MULTI)
 
         treeGrid.asMultiSelect().addValueChangeListener { event ->
-            updateSelected(
-                event = event,
-                treeGrid = treeGrid,
-                fireEvents = fireEvents
-            )
+            if (fireEvents) {
+                updateSelected(
+                    event = event,
+                    treeGrid = treeGrid,
+                    fireEvents = true
+                )
+            }
         }
 
         if (!selectable) {

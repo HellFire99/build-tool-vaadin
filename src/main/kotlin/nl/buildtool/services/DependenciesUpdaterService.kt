@@ -9,11 +9,13 @@ import nl.buildtool.model.converter.PomFileConverter.readXml
 import nl.buildtool.model.converter.PomFileConverter.writeXml
 import nl.buildtool.model.events.PomFileDeselectedEvent
 import nl.buildtool.model.events.PomFileSelectedEvent
+import nl.buildtool.utils.ExtensionFunctions.logEvent
 import nl.buildtool.utils.GlobalEventBus
 import nl.buildtool.views.model.ViewModel
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.stereotype.Service
+import org.w3c.dom.Document
 import org.w3c.dom.Element
 import javax.xml.xpath.XPathConstants.NODE
 import javax.xml.xpath.XPathFactory
@@ -31,53 +33,52 @@ class DependenciesUpdatesService(private val viewModel: ViewModel) : Initializin
     private fun subscribe(event: PomFileDeselectedEvent) {
         logger.info("PomFileDeselectedEvent ontvangen. ${event.pomFile.artifactId}")
         ui.access {
-            val dependentPomFiles = findPomFiles(
-                treeGrid = viewModel.targetGrid,
-                artifactId = event.pomFile.artifactId,
-                groupId = event.pomFile.groupId
-            )
-            dependentPomFiles.let {
-                dependentPomFiles.forEach { dependentPomFile ->
-                    viewModel.targetGrid.deselect(dependentPomFile)
-
-                    val parent = viewModel.targetGrid.treeData.getParent(dependentPomFile)
-                    if (parent != null) {
-                        viewModel.targetGrid.deselect(parent)
-                    }
-                }
-            }
+            reselectTargetPomFiles()
         }
     }
 
     @Subscribe
     private fun subscribe(event: PomFileSelectedEvent) {
         logger.info("PomFileSelectedEvent ontvangen. ${event.pomFile.artifactId}")
-        // zoek in target obv artifactId en groupId
         ui.access {
-            val dependentPomFiles = findPomFiles(
-                treeGrid = viewModel.targetGrid,
-                artifactId = event.pomFile.artifactId,
-                groupId = event.pomFile.groupId
-            )
-            dependentPomFiles.let {
-                dependentPomFiles.forEach { dependentPomFile ->
-                    viewModel.targetGrid.select(dependentPomFile)
+            reselectTargetPomFiles()
+        }
+    }
 
-                    val parent = viewModel.targetGrid.treeData.getParent(dependentPomFile)
-                    if (parent != null) {
-                        viewModel.targetGrid.select(parent)
-                    }
-                }
+    fun reselectTargetPomFiles() {
+        viewModel.targetGrid.deselectAll()
+
+        viewModel.sourceGrid.selectedItems.forEach { selectedPomFile ->
+            select(selectedPomFile)
+        }
+    }
+
+    fun select(selectedPomFile: PomFile) {
+        val dependentPomFiles = findPomFiles(
+            treeGrid = viewModel.targetGrid,
+            artifactId = selectedPomFile.artifactId,
+            groupId = selectedPomFile.groupId
+        )
+        dependentPomFiles.forEach { dependentPomFile ->
+            viewModel.targetGrid.select(dependentPomFile)
+
+            val parent = viewModel.targetGrid.treeData.getParent(dependentPomFile)
+            // Selecteer de parent als die niet al geselecteerd is.
+            if (parent != null && !viewModel.targetGrid.selectedItems.contains(parent)) {
+                viewModel.targetGrid.select(parent)
             }
         }
     }
 
     fun updateDependencies() {
-        val soureGrid = viewModel.sourceGrid
-        val targetGrid = viewModel.targetGrid
+        val selectedSourceItems = viewModel.sourceGrid.selectedItems
+        val selectedTargetItems = viewModel.targetGrid.selectedItems
+        val changePomFilesMap = mutableMapOf<PomFile, Document>()
 
-        val selectedSourceItems = soureGrid.selectedItems
-        targetGrid.selectedItems.forEach { selectedTargetItem ->
+        // Reset reload boolean
+        selectedTargetItems.parallelStream().map { it.triggerReload = false }
+
+        selectedTargetItems.forEach { selectedTargetItem ->
             selectedSourceItems.forEach { selectedSourceItem ->
                 if (selectedTargetItem.pomDependencies?.contains(
                         artifactId = selectedSourceItem.artifactId,
@@ -87,34 +88,27 @@ class DependenciesUpdatesService(private val viewModel: ViewModel) : Initializin
                     val teUpdatenDependency = selectedTargetItem.pomDependencies?.firstOrNull {
                         it.artifactId == selectedSourceItem.artifactId &&
                                 it.groupId == selectedSourceItem.groupId
-                    }
-                    teUpdatenDependency?.let {
-                        logger.info("Update dependency ${it.artifactId} from ${it.version} to ${selectedSourceItem.version} in pomFile ${selectedTargetItem.file.canonicalFile}")
-                        updateDependency(
-                            pomFileToUpdate = selectedTargetItem,
-                            targetArtifactId = selectedSourceItem.artifactId,
-                            targetGroupId = selectedSourceItem.groupId,
-                            targetVersion = selectedSourceItem.version
-                        )
-                    }
+                    } ?: return
+                    val updatedPomDocument = updateDependency(
+                        pomFileToUpdate = selectedTargetItem,
+                        teUpdatenDependency = teUpdatenDependency,
+                        targetArtifactId = selectedSourceItem.artifactId,
+                        targetVersion = selectedSourceItem.version
+                    )
+                    changePomFilesMap[selectedTargetItem] = updatedPomDocument
                 }
             }
         }
+        writeChangedDependencies(changePomFilesMap)
     }
 
     private fun updateDependency(
         pomFileToUpdate: PomFile,
+        teUpdatenDependency: PomDependency,
         targetArtifactId: String,
-        targetGroupId: String,
         targetVersion: String
-    ) {
-        val teUpdatenDependency = pomFileToUpdate.pomDependencies?.firstOrNull {
-            it.artifactId == targetArtifactId && it.groupId == targetGroupId
-        }
-            ?: throw Exception(
-                "Dependency niet gevonden. file=${pomFileToUpdate.file.canonicalFile}; " +
-                        "gezocht artifactId=$targetArtifactId; gezocht groupId=$targetGroupId"
-            )
+    ): Document {
+        logger.info("Update dependency $targetArtifactId from ${teUpdatenDependency.version} to $targetVersion in pomFile ${pomFileToUpdate.file.canonicalFile}")
 
         val pomDocument = readXml(pomFileToUpdate.file)
         val xpFactory = XPathFactory.newInstance()
@@ -125,12 +119,21 @@ class DependenciesUpdatesService(private val viewModel: ViewModel) : Initializin
         // Update version
         versionNode?.firstChild?.nodeValue = targetVersion
 
-        // Wegschrijven
-        logger.info("Write to file ${pomFileToUpdate.file.canonicalFile}")
-        writeXml(
-            pomFile = pomFileToUpdate.file,
-            pomDocument = pomDocument
-        )
+        pomFileToUpdate.triggerReload = true
+        return pomDocument
+    }
+
+    private fun writeChangedDependencies(pomsWithChangedDependencies: Map<PomFile, Document>) {
+        pomsWithChangedDependencies.filter { (key, _) -> key.triggerReload == true }
+            .entries
+            .parallelStream().forEach {
+                // Wegschrijven
+                logEvent("Write to file ${it.key.file.canonicalFile}")
+                writeXml(
+                    pomFile = it.key.file,
+                    pomDocument = it.value
+                )
+            }
     }
 
     private fun findPomFiles(treeGrid: TreeGrid<PomFile>, artifactId: String, groupId: String): List<PomFile> {

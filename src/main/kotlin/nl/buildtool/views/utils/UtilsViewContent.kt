@@ -257,7 +257,7 @@ class UtilsViewContent(
             sourceGrid = sourceGrid,
             targetGrid = targetGrid
         )
-        
+
         this.dependenciesUpdatesService.setupDependenciesUpdater(
             ui = ui
         )
@@ -272,8 +272,14 @@ class UtilsViewContent(
     private fun subscribe(event: RefreshTableEvent) {
         logEvent("RefreshTableEvent ontvangen")
         ui.access {
-            pomFileSelectionGrid.treeData = pomFileDataProvider.dataProvider(true).treeData
+            val newTreeData = pomFileDataProvider.dataProvider(true).treeData
+            pomFileSelectionGrid.treeData = newTreeData
+            viewModel.targetGrid.treeData = newTreeData
+            viewModel.sourceGrid.treeData = newTreeData
+
             pomFileSelectionGrid.refresh()
+            viewModel.targetGrid.refresh()
+            viewModel.sourceGrid.refresh()
         }
     }
 

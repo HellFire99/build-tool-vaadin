@@ -8,6 +8,7 @@ import com.vaadin.flow.component.sidenav.SideNav
 import com.vaadin.flow.component.sidenav.SideNavItem
 import com.vaadin.flow.router.PageTitle
 import com.vaadin.flow.theme.lumo.LumoUtility
+import nl.buildtool.model.Globals
 import nl.buildtool.views.about.AboutView
 import nl.buildtool.views.build.BuildView
 import nl.buildtool.views.settings.SettingsView
@@ -21,6 +22,7 @@ class MainLayout : AppLayout() {
     private var viewTitle: H1? = null
 
     init {
+        Globals.pomFileList = emptyList()
         primarySection = Section.DRAWER
         addDrawerContent()
         addHeaderContent()
