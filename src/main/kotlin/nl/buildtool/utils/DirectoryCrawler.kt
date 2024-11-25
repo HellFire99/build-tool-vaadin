@@ -30,7 +30,7 @@ class DirectoryCrawler {
         logger.info("Searching pom files in $root")
         val pomFilesFound = File(root).walkTopDown()
             .maxDepth(3)
-            .filter { it.name == "pom.xml" }
+            .filter { it.name == "pom.xml" && it.parentFile != File(root) }
             .map { mapToPomFile(it) }
             .filterNotNull()
             .toList()
