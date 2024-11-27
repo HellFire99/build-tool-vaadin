@@ -3,6 +3,7 @@ package nl.buildtool.services
 import com.google.common.eventbus.Subscribe
 import com.vaadin.flow.component.UI
 import com.vaadin.flow.component.treegrid.TreeGrid
+import com.vaadin.flow.data.provider.hierarchy.TreeDataProvider
 import nl.buildtool.model.PomDependency
 import nl.buildtool.model.PomFile
 import nl.buildtool.model.converter.PomFileConverter.readXml
@@ -49,16 +50,26 @@ class DependenciesUpdatesService(private val viewModel: ViewModel) : Initializin
         viewModel.targetGrid.deselectAll()
 
         viewModel.sourceGrid.selectedItems.forEach { selectedPomFile ->
-            select(selectedPomFile)
+            selectInTargetGrid(selectedPomFile)
+        }
+
+        val dataProvider = viewModel.targetGrid.dataProvider
+        if (dataProvider is TreeDataProvider) {
+            val selectedItems = viewModel.targetGrid.selectedItems
+            if (selectedItems.size > 0) {
+                dataProvider.setFilter { selectedItems.contains(it) }
+            } else {
+                dataProvider.setFilter(null)
+            }
         }
     }
 
-    fun select(selectedPomFile: PomFile) {
+    fun selectInTargetGrid(selectedPomFile: PomFile) {
         val dependentPomFiles = findPomFiles(
             treeGrid = viewModel.targetGrid,
             artifactId = selectedPomFile.artifactId,
             groupId = selectedPomFile.groupId
-        )
+                                            )
         dependentPomFiles.forEach { dependentPomFile ->
             viewModel.targetGrid.select(dependentPomFile)
 
@@ -72,18 +83,18 @@ class DependenciesUpdatesService(private val viewModel: ViewModel) : Initializin
 
     fun updateDependencies() {
         val selectedSourceItems = viewModel.sourceGrid.selectedItems
-        val selectedTargetItems = viewModel.targetGrid.selectedItems
+        val selectedTargetItems = viewModel.targetGrid.selectedItems.toMutableSet()
         val changePomFilesMap = mutableMapOf<PomFile, Document>()
 
         // Reset reload boolean
         selectedTargetItems.parallelStream().map { it.triggerReload = false }
 
         selectedTargetItems.forEach { selectedTargetItem ->
+            // TODO HIer gaat iets niet goed als er meerdere source dependencies geselecteerd zijn.
             selectedSourceItems.forEach { selectedSourceItem ->
                 if (selectedTargetItem.pomDependencies?.contains(
                         artifactId = selectedSourceItem.artifactId,
-                        groupId = selectedSourceItem.groupId
-                    ) == true
+                        groupId = selectedSourceItem.groupId) == true
                 ) {
                     val teUpdatenDependency = selectedTargetItem.pomDependencies?.firstOrNull {
                         it.artifactId == selectedSourceItem.artifactId &&
@@ -94,7 +105,7 @@ class DependenciesUpdatesService(private val viewModel: ViewModel) : Initializin
                         teUpdatenDependency = teUpdatenDependency,
                         targetArtifactId = selectedSourceItem.artifactId,
                         targetVersion = selectedSourceItem.version
-                    )
+                                                             )
                     changePomFilesMap[selectedTargetItem] = updatedPomDocument
                 }
             }
@@ -107,7 +118,7 @@ class DependenciesUpdatesService(private val viewModel: ViewModel) : Initializin
         teUpdatenDependency: PomDependency,
         targetArtifactId: String,
         targetVersion: String
-    ): Document {
+                                ): Document {
         logger.info("Update dependency $targetArtifactId from ${teUpdatenDependency.version} to $targetVersion in pomFile ${pomFileToUpdate.file.canonicalFile}")
 
         val pomDocument = readXml(pomFileToUpdate.file)
@@ -132,7 +143,7 @@ class DependenciesUpdatesService(private val viewModel: ViewModel) : Initializin
                 writeXml(
                     pomFile = it.key.file,
                     pomDocument = it.value
-                )
+                        )
             }
     }
 
@@ -158,7 +169,7 @@ class DependenciesUpdatesService(private val viewModel: ViewModel) : Initializin
         pomFile: PomFile,
         artifactId: String,
         groupId: String
-    ): PomDependency? {
+                             ): PomDependency? {
         val pomDependency = pomFile.pomDependencies?.firstOrNull { pomDependency ->
             pomDependency.artifactId == artifactId && pomDependency.groupId == groupId
         }

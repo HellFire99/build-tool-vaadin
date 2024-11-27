@@ -15,7 +15,13 @@ import com.vaadin.flow.component.textfield.TextField
 import com.vaadin.flow.component.treegrid.TreeGrid
 import com.vaadin.flow.data.value.ValueChangeMode
 import com.vaadin.flow.theme.lumo.LumoUtility
-import nl.buildtool.model.*
+import nl.buildtool.model.LABEL_AUTO_DETECT_INFO
+import nl.buildtool.model.PomFile
+import nl.buildtool.model.RADIO_VALUE_ALL_IN_WORSPACE
+import nl.buildtool.model.RADIO_VALUE_AUTO_DETECT
+import nl.buildtool.model.RADIO_VALUE_CUSTOM_PREFIX
+import nl.buildtool.model.RADIO_VALUE_SELECTION
+import nl.buildtool.model.UtilsMode
 import nl.buildtool.model.events.RefreshTableEvent
 import nl.buildtool.services.DependenciesUpdatesService
 import nl.buildtool.utils.ExtensionFunctions.logEvent
@@ -32,7 +38,7 @@ class UtilsViewContent(
     private val pomFileDataProvider: PomFileDataProvider,
     private val dependenciesUpdatesService: DependenciesUpdatesService,
     private val viewModel: ViewModel
-) {
+                      ) {
     private val logger = LoggerFactory.getLogger(UtilsViewContent::class.java)
 
     private lateinit var secondColumnVerticalLayout: VerticalLayout
@@ -95,7 +101,7 @@ class UtilsViewContent(
             autoDetectInfoMessage = autoDetectInfoMessage,
             customPrefixTextfield = customPrefixTextfield,
             middleColumn = middleColumn
-        ) { this.evaluateExecuteButtonEnabling() }
+                                                                   ) { this.evaluateExecuteButtonEnabling() }
 
         val rightColumn = VerticalLayout()
         rightColumn.setId("rightColumn")
@@ -170,16 +176,15 @@ class UtilsViewContent(
 
     private fun setContent(tab: Tab) {
         if (tab == prefixPomFilesTab) {
-            prefixPomsButtonClicked()
+            prefixPomsTabClicked()
         } else if (tab == updateDependenciesTab) {
-            updateDependenciesButtonClicked()
+            updateDependenciesTabClicked()
         }
     }
 
-    private fun prefixPomsButtonClicked() {
-        logger.info("prefixPomsButtonClicked")
+    private fun prefixPomsTabClicked() {
+        logEvent("Prefix Poms tab clicked")
         utilsMode = UtilsMode.UPDATE_POM_VERSIONS
-        logEvent("Prefix Poms button clicked")
         secondColumnVerticalLayout.removeAll()
         secondColumnVerticalLayout.add(contentRowPrefixPomFiles)
         resetToDefaults()
@@ -191,8 +196,8 @@ class UtilsViewContent(
         this.pomFileSelectionGrid.deselectAll()
     }
 
-    private fun updateDependenciesButtonClicked() {
-        logEvent("Update dependencies button clicked")
+    private fun updateDependenciesTabClicked() {
+        logEvent("Update dependencies tab clicked")
         utilsMode = UtilsMode.UPDATE_DEPENDENCIES
         secondColumnVerticalLayout.removeAll()
         secondColumnVerticalLayout.add(contentRowUpdateDependencies)
@@ -215,28 +220,22 @@ class UtilsViewContent(
         val sourceColumn = createVerticalLayout(
             id = "sourceColumn",
             label = "Source",
-            treeGrid = sourceGrid
-        )
+            treeGrid = sourceGrid)
 
         // Target/right
         val targetGrid = pomFileDataProvider.createTreeGrid(selectable = false)
         val targetColumn = createVerticalLayout(
             id = "targetColumn",
             label = "Target",
-            treeGrid = targetGrid
-        )
+            treeGrid = targetGrid)
 
         contentRowUpdateDependencies.add(sourceColumn)
         contentRowUpdateDependencies.add(targetColumn)
 
-        this.viewModel.init(
-            sourceGrid = sourceGrid,
-            targetGrid = targetGrid
-        )
+        this.viewModel.init(sourceGrid = sourceGrid,
+                            targetGrid = targetGrid)
 
-        this.dependenciesUpdatesService.setupDependenciesUpdater(
-            ui = ui
-        )
+        this.dependenciesUpdatesService.setupDependenciesUpdater(ui = ui)
         this.contentRowUpdateDependencies = contentRowUpdateDependencies
     }
 
@@ -263,7 +262,7 @@ class UtilsViewContent(
         id: String,
         label: String,
         treeGrid: TreeGrid<PomFile>
-    ): VerticalLayout {
+                                    ): VerticalLayout {
         val column = VerticalLayout()
         column.setId(id)
         column.addClassName(LumoUtility.Gap.XSMALL)
