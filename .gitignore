@@ -2,7 +2,7 @@ node_modules
 HELP.md
 target/
 !.mvn/wrapper/maven-wrapper.jar
-!**/src/main/**/target/
+!**/src/main/**/generated/
 !**/src/test/**/target/
 
 ### STS ###
@@ -35,4 +35,5 @@ build/
 /src/main/frontend/generated/flow/chunks/chunk-8f6c8b0efd206b81a27e860bd25380857430b944da774177bf528d24efa997b5.js
 /src/main/frontend/generated/flow/chunks/chunk-7356e4535de95bda95b8cf4a12fc52bd67dce7225b69d15d4cb159fbf24334ac.js
 /src/main/frontend/generated/flow/chunks/chunk-ff86b72e506ce6943a3aa2df49fc94b060f0c550f0c3061f92a3f4091bea3259.js
+/src/main/frontend/generated/
 /src/main/frontend/generated/
