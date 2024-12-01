@@ -31,7 +31,8 @@ object PomFileConverter {
                 version = extractVersion(pomXmlDoc),
                 file = file,
                 modules = extractModules(pomXmlDoc),
-                pomDependencies = extractDependencies(pomXmlDoc)
+                pomDependencies = extractDependencies(pomXmlDoc),
+                pomDocument = pomXmlDoc
             )
         } catch (e: Exception) {
             logger.error("XML Error. file=${file}, ${e.message}")

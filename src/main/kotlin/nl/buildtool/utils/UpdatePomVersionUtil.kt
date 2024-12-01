@@ -3,7 +3,6 @@ package nl.buildtool.utils
 import com.google.common.base.Stopwatch
 import nl.buildtool.git.getGitBranchName
 import nl.buildtool.model.*
-import nl.buildtool.model.converter.PomFileConverter.readXml
 import nl.buildtool.model.converter.PomFileConverter.writeXml
 import nl.buildtool.model.events.RefreshTableEvent
 import nl.buildtool.utils.ExtensionFunctions.logEvent
@@ -62,12 +61,11 @@ class UpdatePomVersionUtil {
             gitBranchJiraNr?.let { myGitBranchJiraNr ->
                 // Als gitBranchJiraNr voorkomt in de pom.version, wijzig dan de pom.version
                 // verwijder gitBranchJiraNr uit de pom.version
-                val pomDocument = readXml(pomFile.file)
                 verwijderPrefixInPomDocumentVersion(
-                    pomDocument = pomDocument,
+                    pomDocument = pomFile.pomDocument,
                     teVerwijderenPrefix = myGitBranchJiraNr
                 )
-                writeXml(pomFile.file, pomDocument)
+                writeXml(pomFile.file, pomFile.pomDocument)
                 pomFile.triggerReload = true
             }
         }
@@ -168,17 +166,16 @@ class UpdatePomVersionUtil {
 
     private fun updatePomVersie(pomFile: PomFile, gewenstePomVersionPrefix: String) {
         // Begint de pom.project.version met het gewensteJiraNr ?
-        val pomDocument = readXml(pomFile.file)
-        val pomVersion = getPomVersion(pomDocument)
+        val pomVersion = getPomVersion(pomFile.pomDocument)
 
         // nee, update pom versie
         if (!pomVersion.contains(gewenstePomVersionPrefix, true)) {
             logEvent(" --> Pom version: ${pomVersion}. Update pomVersion...")
             zetPrefixInPomDocumentVersion(
-                pomDocument = pomDocument,
+                pomDocument = pomFile.pomDocument,
                 gewenstePomVersionPrefix = gewenstePomVersionPrefix
             )
-            writeXml(pomFile.file, pomDocument)
+            writeXml(pomFile.file, pomFile.pomDocument)
             pomFile.triggerReload = true
         }
     }

@@ -32,13 +32,13 @@ import java.util.concurrent.CompletableFuture
 @Route(value = "utils", layout = MainLayout::class)
 @Uses(
     Icon::class
-     )
+)
 class UtilsView(
     utilsViewContent: UtilsViewContent,
     loggingService: LoggingService,
     private val pomFilePrefixExecutor: PomFilePrefixExecutor,
     private val updateDependenciesExecutor: UpdateDependenciesExecutor
-               ) : Composite<VerticalLayout?>() {
+) : Composite<VerticalLayout?>() {
     private val logger = LoggerFactory.getLogger(UtilsView::class.java)
     var executeButton: Button
     var progressBar: ProgressBarIndeterminate
@@ -92,7 +92,7 @@ class UtilsView(
 
         val loggingTextArea = loggingService.setupTextArea(
             loggingTextArea = TextArea()
-                                                          )
+        )
         footerRow.setAlignSelf(FlexComponent.Alignment.CENTER, loggingTextArea)
 
         footerRow.add(buttonRow)
@@ -107,7 +107,7 @@ class UtilsView(
     private fun updateDepencencies(
         event: ClickEvent<Button>,
         content: UtilsViewContent
-                                  ) {
+    ) {
 
         val ui: UI = event.source.ui.orElseThrow()
         val startJobFuture = CompletableFuture.supplyAsync {
@@ -116,11 +116,13 @@ class UtilsView(
                 executeButton.isVisible = false
             }
         }
-        val jobExecution = updateDependenciesExecutor.executeJob(ui, this)
 
         startJobFuture.thenRun {
             logEvent("Execute button clicked. Update dependencies.")
         }
+
+        val jobExecution = updateDependenciesExecutor.executeJob(ui, this)
+
         jobExecution?.thenRun {
             logEvent("Job done!")
         }
@@ -129,7 +131,7 @@ class UtilsView(
     private fun updatePomVersions(
         event: ClickEvent<Button>,
         utilsViewContent: UtilsViewContent
-                                 ) {
+    ) {
         val ui: UI = event.source.ui.orElseThrow()
         val startJobFuture = CompletableFuture.supplyAsync {
             ui.access {
@@ -143,7 +145,7 @@ class UtilsView(
             pomFileSelectRadioValue = utilsViewContent.pomFileSelectRadio.value,
             customPrefixTextfield = utilsViewContent.customPrefixTextfield.value,
             selectedPomFiles = utilsViewContent.pomFileSelectionGrid.selectedItems
-                                                        )
+        )
         val jobExecution = pomFilePrefixExecutor.executeJob(ui, this, jobExecutionParameter)
 
         startJobFuture.thenRun {

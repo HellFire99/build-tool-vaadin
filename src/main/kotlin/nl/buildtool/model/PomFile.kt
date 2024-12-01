@@ -1,6 +1,7 @@
 package nl.buildtool.model
 
 import org.apache.maven.shared.utils.cli.CommandLineException
+import org.w3c.dom.Document
 import java.io.File
 import java.time.Duration
 import java.time.LocalDateTime
@@ -18,7 +19,8 @@ class PomFile(
     var status: BuildStatus = BuildStatus.NONE,
     var triggerReload: Boolean? = false,
     var modules: List<String>? = emptyList(),
-    var pomDependencies: List<PomDependency>? = emptyList()
+    var pomDependencies: List<PomDependency>? = emptyList(),
+    var pomDocument: Document
 ) {
     var executionException: CommandLineException? = null
     var modulePoms = mapOf<String, PomFile>()
