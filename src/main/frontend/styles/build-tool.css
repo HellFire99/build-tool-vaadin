@@ -17,3 +17,11 @@
 .smaller-font{
     font-size: 15px;
 }
+
+vaadin-app-layout::part(navbar) {
+  background-color: #E7F2FE;
+}
+
+h1 {
+  color: #61a3fa;
+}
