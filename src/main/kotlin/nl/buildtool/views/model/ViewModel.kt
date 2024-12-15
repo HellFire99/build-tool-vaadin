@@ -6,6 +6,8 @@ import org.springframework.stereotype.Component
 
 @Component
 class ViewModel {
+    final lateinit var buildViewGrid: TreeGrid<PomFile>
+
     final lateinit var sourceGrid: TreeGrid<PomFile>
         private set
 

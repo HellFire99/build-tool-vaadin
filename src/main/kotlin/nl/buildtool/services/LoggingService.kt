@@ -30,6 +30,12 @@ class LoggingService : InitializingBean {
         }
     }
 
+    fun clean() {
+        ui.access {
+            loggingTextArea.value = ""
+        }
+    }
+
     fun setupTextArea(loggingTextArea: TextArea): TextArea {
         loggingTextArea.setId("logTextArea")
         loggingTextArea.setWidthFull()

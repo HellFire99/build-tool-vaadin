@@ -9,7 +9,6 @@ import org.springframework.scheduling.annotation.Async
 import org.springframework.stereotype.Service
 import java.util.concurrent.CompletableFuture
 
-
 @Service
 class PomFilePrefixExecutor(private val updatePomVersionUtil: UpdatePomVersionUtil) {
     private val logger = LoggerFactory.getLogger(this::class.java)
@@ -18,7 +17,8 @@ class PomFilePrefixExecutor(private val updatePomVersionUtil: UpdatePomVersionUt
     fun executeJob(
         ui: UI,
         utilsView: UtilsView,
-        jobExecutionParameter: UpdatePomsParameters): CompletableFuture<Any>? = CompletableFuture.supplyAsync {
+        jobExecutionParameter: UpdatePomsParameters
+    ): CompletableFuture<Any>? = CompletableFuture.supplyAsync {
         try {
             if (jobExecutionParameter.autoDetectCustomOrReset == RADIO_VALUE_RESET_POMS) {
                 updatePomVersionUtil.resetPoms(jobExecutionParameter)

@@ -1,6 +1,9 @@
 package nl.buildtool.views.build
 
+import com.github.mvysny.kaributools.refresh
+import com.google.common.eventbus.Subscribe
 import com.vaadin.flow.component.Composite
+import com.vaadin.flow.component.UI
 import com.vaadin.flow.component.button.Button
 import com.vaadin.flow.component.button.ButtonVariant
 import com.vaadin.flow.component.checkbox.CheckboxGroup
@@ -14,19 +17,35 @@ import com.vaadin.flow.router.Menu
 import com.vaadin.flow.router.PageTitle
 import com.vaadin.flow.router.Route
 import com.vaadin.flow.theme.lumo.LumoUtility
+import nl.buildtool.maven.BuildExecutor
+import nl.buildtool.model.events.BuildingCompleteEvent
 import nl.buildtool.services.LoggingService
 import nl.buildtool.services.PomFileDataProviderService
 import nl.buildtool.utils.ExtensionFunctions.logEvent
+import nl.buildtool.utils.GlobalEventBus
 import nl.buildtool.views.MainLayout
+import nl.buildtool.views.components.ButtonBuild
+import nl.buildtool.views.components.ButtonCleanLog
+import nl.buildtool.views.components.ButtonRefresh
+import nl.buildtool.views.components.CheckboxTargets
+import nl.buildtool.views.model.ViewModel
+import org.springframework.beans.factory.InitializingBean
 
 @PageTitle("Build")
 @Menu(icon = "line-awesome/svg/pencil-ruler-solid.svg", order = 0.0)
 @Route(value = "", layout = MainLayout::class)
 class BuildView(
     pomFileDataProviderService: PomFileDataProviderService,
-    loggingService: LoggingService
-) : Composite<VerticalLayout?>() {
+    loggingService: LoggingService,
+    buildExecutor: BuildExecutor,
+    private val viewModel: ViewModel
+) : Composite<VerticalLayout?>(), InitializingBean {
+    private lateinit var ui: UI
+
     init {
+        ui = UI.getCurrent()
+        viewModel.buildViewGrid = pomFileDataProviderService.createTreeGrid()
+
         content?.style?.set("gap", "0")
         content?.width = "100%"
         content?.style?.set("flex-grow", "1")
@@ -73,8 +92,7 @@ class BuildView(
         val layoutColumn4 = VerticalLayout()
         layoutColumn4.setId("layoutColumn4")
 
-        val targetsChackbox = CheckboxGroup<Any?>()
-        targetsChackbox.setId("checkboxGroup")
+        val targetsCheckbox = CheckboxTargets()
 
         val layoutColumn5 = VerticalLayout()
         layoutColumn5.setId("layoutColumn5")
@@ -91,22 +109,14 @@ class BuildView(
         val layoutRow5 = HorizontalLayout()
         layoutRow5.setId("layoutRow5")
 
-        val buttonBuild = Button("Build")
+        val buttonBuild = ButtonBuild(buildExecutor, viewModel.buildViewGrid, targetsCheckbox)
         val buttonCancel = Button("Cancel")
         val layoutRow6 = HorizontalLayout()
         layoutRow6.setId("layoutRow6")
 
-        val buttonRefresh = Button("Refresh")
-        buttonRefresh.setId("buttonRefresh")
-        buttonRefresh.addClickListener {
-            logEvent("buttonRefresh clicked")
-        }
+        val buttonRefresh = ButtonRefresh(pomFileDataProviderService, viewModel.buildViewGrid)
+        val buttonCleanLog = ButtonCleanLog(loggingService)
 
-        val buttonCleanLog = Button("Clean log")
-        buttonCleanLog.setId("buttonCleanLog")
-        buttonCleanLog.addClickListener {
-            logEvent("buttonCleanLog clicked")
-        }
         val footerRow = HorizontalLayout()
         footerRow.setId("footerRow")
         footerRow.addClassName(LumoUtility.Gap.MEDIUM)
@@ -130,12 +140,6 @@ class BuildView(
         layoutColumn4.addClassName(LumoUtility.Padding.XSMALL)
         layoutColumn4.width = "100%"
         layoutColumn4.height = "min-content"
-        targetsChackbox.label = "Targets"
-        targetsChackbox.width = "min-content"
-
-        targetsChackbox.setItems("Clean", "Install", "Package", "Test", "Verify")
-        targetsChackbox.addThemeVariants(CheckboxGroupVariant.LUMO_VERTICAL)
-        targetsChackbox.value = setOf("Clean", "Install")
         layoutColumn5.setHeightFull()
         layoutRow3.setFlexGrow(1.0, layoutColumn5)
         layoutColumn5.addClassName(LumoUtility.Gap.XSMALL)
@@ -158,13 +162,8 @@ class BuildView(
         layoutRow5.width = "100%"
         layoutRow5.height = "min-content"
 
-        buttonBuild.setId("buttonBuild")
-        buttonBuild.addClickListener {
-            logEvent("buttonBuild clicked")
-        }
         layoutRow5.setAlignSelf(FlexComponent.Alignment.CENTER, buttonBuild)
-        buttonBuild.width = "min-content"
-        buttonBuild.addThemeVariants(ButtonVariant.LUMO_PRIMARY)
+
         buttonCancel.setId("buttonCancel")
         buttonCancel.addClickListener {
             logEvent("buttonCancel clicked")
@@ -191,18 +190,16 @@ class BuildView(
         )
         footerRow.setAlignSelf(FlexComponent.Alignment.CENTER, loggingTextArea)
 
-        val treeGrid = pomFileDataProviderService.createTreeGrid()
-
         content?.add(layoutRow)
         layoutRow.add(textField)
         layoutRow.add(buttonClearFilter)
         content?.add(layoutRow2)
         layoutRow2.add(leftColumn)
-        leftColumn.add(treeGrid)
+        leftColumn.add(viewModel.buildViewGrid)
         layoutRow2.add(rightColumn)
         rightColumn.add(layoutRow3)
         layoutRow3.add(layoutColumn4)
-        layoutColumn4.add(targetsChackbox)
+        layoutColumn4.add(targetsCheckbox)
         layoutRow3.add(layoutColumn5)
         layoutColumn5.add(optionsCheckbox)
         content?.add(layoutColumn6)
@@ -217,4 +214,16 @@ class BuildView(
         footerRow.add(loggingTextArea)
     }
 
+    @Subscribe
+    fun subscribe(event: BuildingCompleteEvent) {
+        logEvent(event.statusText)
+        ui.access {
+            viewModel.buildViewGrid.deselectAll()
+            viewModel.buildViewGrid.refresh()
+        }
+    }
+
+    override fun afterPropertiesSet() {
+        GlobalEventBus.eventBus.register(this)
+    }
 }
