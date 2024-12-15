@@ -1,4 +1,4 @@
-package nl.buildtool.views.build
+package nl.buildtool.services
 
 import com.vaadin.flow.component.AbstractField
 import com.vaadin.flow.component.grid.Grid
@@ -15,8 +15,8 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 
 @Component
-class PomFileDataProvider(private val directoryCrawler: DirectoryCrawler) {
-    private val logger = LoggerFactory.getLogger(PomFileDataProvider::class.java)
+class PomFileDataProviderService(private val directoryCrawler: DirectoryCrawler) {
+    private val logger = LoggerFactory.getLogger(PomFileDataProviderService::class.java)
 
     fun createTreeGrid(
         update: Boolean = false,
@@ -34,13 +34,13 @@ class PomFileDataProvider(private val directoryCrawler: DirectoryCrawler) {
         treeGrid.setSelectionMode(Grid.SelectionMode.MULTI)
 
         treeGrid.asMultiSelect().addValueChangeListener { event ->
-            if (fireEvents) {
-                updateSelected(
-                    event = event,
-                    treeGrid = treeGrid,
-                    fireEvents = true
-                )
-            }
+//            if (fireEvents) {
+            updateSelected(
+                event = event,
+                treeGrid = treeGrid,
+                fireEvents = fireEvents
+            )
+//            }
         }
 
         if (!selectable) {
@@ -112,9 +112,11 @@ class PomFileDataProvider(private val directoryCrawler: DirectoryCrawler) {
                     }
                 }
 
-                globalPomFile?.let {
-                    logger.info("Afvuren PomFileSelectedEvent. ${it.artifactId}")
-                    post(PomFileSelectedEvent(it))
+                if (fireEvents) {
+                    globalPomFile?.let {
+                        logger.info("Afvuren PomFileSelectedEvent. ${it.artifactId}")
+                        post(PomFileSelectedEvent(it))
+                    }
                 }
             }
         }
@@ -145,9 +147,12 @@ class PomFileDataProvider(private val directoryCrawler: DirectoryCrawler) {
                         treeGrid.selectionModel.deselect(pomFile)
                     }
                 }
-                globalPomFile?.let {
-                    logger.info("Afvuren PomFileDeselectedEvent. ${it.artifactId}")
-                    post(PomFileDeselectedEvent(it))
+
+                if (fireEvents) {
+                    globalPomFile?.let {
+                        logger.info("Afvuren PomFileDeselectedEvent. ${it.artifactId}")
+                        post(PomFileDeselectedEvent(it))
+                    }
                 }
             }
 

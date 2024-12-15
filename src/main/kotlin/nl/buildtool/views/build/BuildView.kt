@@ -15,6 +15,7 @@ import com.vaadin.flow.router.PageTitle
 import com.vaadin.flow.router.Route
 import com.vaadin.flow.theme.lumo.LumoUtility
 import nl.buildtool.services.LoggingService
+import nl.buildtool.services.PomFileDataProviderService
 import nl.buildtool.utils.ExtensionFunctions.logEvent
 import nl.buildtool.views.MainLayout
 
@@ -22,7 +23,7 @@ import nl.buildtool.views.MainLayout
 @Menu(icon = "line-awesome/svg/pencil-ruler-solid.svg", order = 0.0)
 @Route(value = "", layout = MainLayout::class)
 class BuildView(
-    pomFileDataProvider: PomFileDataProvider,
+    pomFileDataProviderService: PomFileDataProviderService,
     loggingService: LoggingService
 ) : Composite<VerticalLayout?>() {
     init {
@@ -190,7 +191,7 @@ class BuildView(
         )
         footerRow.setAlignSelf(FlexComponent.Alignment.CENTER, loggingTextArea)
 
-        val treeGrid = pomFileDataProvider.createTreeGrid()
+        val treeGrid = pomFileDataProviderService.createTreeGrid()
 
         content?.add(layoutRow)
         layoutRow.add(textField)

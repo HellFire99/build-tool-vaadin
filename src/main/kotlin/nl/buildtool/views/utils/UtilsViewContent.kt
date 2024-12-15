@@ -18,9 +18,9 @@ import com.vaadin.flow.theme.lumo.LumoUtility
 import nl.buildtool.model.*
 import nl.buildtool.model.events.RefreshTableEvent
 import nl.buildtool.services.DependenciesUpdatesService
+import nl.buildtool.services.PomFileDataProviderService
 import nl.buildtool.utils.ExtensionFunctions.logEvent
 import nl.buildtool.utils.GlobalEventBus
-import nl.buildtool.views.build.PomFileDataProvider
 import nl.buildtool.views.components.AutoDetectCustomOrResetRadio
 import nl.buildtool.views.model.ViewModel
 import org.slf4j.LoggerFactory
@@ -29,7 +29,7 @@ import org.springframework.stereotype.Component
 
 @Component
 class UtilsViewContent(
-    private val pomFileDataProvider: PomFileDataProvider,
+    private val pomFileDataProviderService: PomFileDataProviderService,
     private val dependenciesUpdatesService: DependenciesUpdatesService,
     private val viewModel: ViewModel
 ) {
@@ -100,7 +100,7 @@ class UtilsViewContent(
         val rightColumn = VerticalLayout()
         rightColumn.setId("rightColumn")
 
-        pomFileSelectionGrid = pomFileDataProvider.createTreeGrid()
+        pomFileSelectionGrid = pomFileDataProviderService.createTreeGrid()
         pomFileSelectionGrid.addSelectionListener {
             this.evaluateExecuteButtonEnabling()
         }
@@ -180,12 +180,15 @@ class UtilsViewContent(
     private fun prefixPomsTabClicked() {
         logEvent("Prefix Poms tab clicked")
         utilsMode = UtilsMode.UPDATE_POM_VERSIONS
+        dependenciesUpdatesService.unsubscribeEvents()
         secondColumnVerticalLayout.removeAll()
         secondColumnVerticalLayout.add(contentRowPrefixPomFiles)
         resetToDefaults()
     }
 
     private fun resetToDefaults() {
+        utilsMode = UtilsMode.UPDATE_POM_VERSIONS
+        dependenciesUpdatesService.unsubscribeEvents()
         this.pomFileSelectRadio.value = RADIO_VALUE_ALL_IN_WORSPACE
         this.autoDetectCustomOrResetRadio.value = RADIO_VALUE_AUTO_DETECT
         this.pomFileSelectionGrid.deselectAll()
@@ -193,6 +196,7 @@ class UtilsViewContent(
 
     private fun updateDependenciesTabClicked() {
         logEvent("Update dependencies tab clicked")
+        dependenciesUpdatesService.subscribeEvents()
         utilsMode = UtilsMode.UPDATE_DEPENDENCIES
         secondColumnVerticalLayout.removeAll()
         secondColumnVerticalLayout.add(contentRowUpdateDependencies)
@@ -211,7 +215,7 @@ class UtilsViewContent(
         contentRowUpdateDependencies.style["padding"] = "0"
 
         // Source/left
-        val sourceGrid = pomFileDataProvider.createTreeGrid(fireEvents = true)
+        val sourceGrid = pomFileDataProviderService.createTreeGrid(fireEvents = true)
         val sourceColumn = createVerticalLayout(
             id = "sourceColumn",
             label = "Source",
@@ -219,7 +223,7 @@ class UtilsViewContent(
         )
 
         // Target/right
-        val targetGrid = pomFileDataProvider.createTreeGrid(selectable = false)
+        val targetGrid = pomFileDataProviderService.createTreeGrid(selectable = false)
         val targetColumn = createVerticalLayout(
             id = "targetColumn",
             label = "Target",
@@ -247,7 +251,7 @@ class UtilsViewContent(
     private fun subscribe(event: RefreshTableEvent) {
         logEvent("RefreshTableEvent ontvangen")
         ui.access {
-            val newTreeData = pomFileDataProvider.dataProvider(true).treeData
+            val newTreeData = pomFileDataProviderService.dataProvider(true).treeData
             pomFileSelectionGrid.treeData = newTreeData
             viewModel.targetGrid.treeData = newTreeData
             viewModel.sourceGrid.treeData = newTreeData

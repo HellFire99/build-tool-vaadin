@@ -13,14 +13,13 @@ import nl.buildtool.utils.ExtensionFunctions.logEvent
 import nl.buildtool.utils.GlobalEventBus
 import nl.buildtool.views.model.ViewModel
 import org.slf4j.LoggerFactory
-import org.springframework.beans.factory.InitializingBean
 import org.springframework.stereotype.Service
 import org.w3c.dom.Element
 import javax.xml.xpath.XPathConstants.NODE
 import javax.xml.xpath.XPathFactory
 
 @Service
-class DependenciesUpdatesService(private val viewModel: ViewModel) : InitializingBean {
+class DependenciesUpdatesService(private val viewModel: ViewModel) {
     private val logger = LoggerFactory.getLogger(DependenciesUpdatesService::class.java)
     private lateinit var ui: UI
 
@@ -42,6 +41,21 @@ class DependenciesUpdatesService(private val viewModel: ViewModel) : Initializin
         ui.access {
             reselectTargetPomFiles()
         }
+    }
+
+    fun subscribeEvents() {
+        GlobalEventBus.eventBus.register(this)
+    }
+
+    fun unsubscribeEvents() {
+        try {
+            GlobalEventBus.eventBus.unregister(this)
+        } catch (iae: IllegalArgumentException) {
+            if (iae.message?.contains("missing event subscriber") == true) {
+                logger.info("Nothing to unregister")
+            } else throw iae
+        }
+
     }
 
     fun reselectTargetPomFiles() {
@@ -176,9 +190,6 @@ class DependenciesUpdatesService(private val viewModel: ViewModel) : Initializin
         return pomDependency
     }
 
-    override fun afterPropertiesSet() {
-        GlobalEventBus.eventBus.register(this)
-    }
 
     private fun List<PomDependency>.contains(artifactId: String, groupId: String) =
         firstOrNull { it.artifactId == artifactId && it.groupId == groupId } != null
