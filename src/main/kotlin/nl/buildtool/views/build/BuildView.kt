@@ -12,7 +12,6 @@ import com.vaadin.flow.component.orderedlayout.FlexComponent
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout
 import com.vaadin.flow.component.orderedlayout.VerticalLayout
 import com.vaadin.flow.component.textfield.TextArea
-import com.vaadin.flow.component.textfield.TextField
 import com.vaadin.flow.router.Menu
 import com.vaadin.flow.router.PageTitle
 import com.vaadin.flow.router.Route
@@ -52,15 +51,6 @@ class BuildView(
 
         val layoutRow = HorizontalLayout()
         layoutRow.setId("layoutRow1")
-
-        val textField = TextField()
-        textField.setId("filterTextField")
-
-        val buttonClearFilter = Button("X")
-        buttonClearFilter.setId("buttonClearFilter")
-        buttonClearFilter.addClickListener {
-            logEvent("clearFilterButton clicked")
-        }
 
         val layoutRow2 = HorizontalLayout()
         layoutRow2.setId("layoutRow2")
@@ -126,13 +116,6 @@ class BuildView(
         layoutRow.addClassName(LumoUtility.Gap.MEDIUM)
         layoutRow.width = "100%"
         layoutRow.height = "min-content"
-        textField.label = "Maven projects"
-        layoutRow.setAlignSelf(FlexComponent.Alignment.START, textField)
-        textField.width = "500px"
-        layoutRow.setAlignSelf(FlexComponent.Alignment.END, buttonClearFilter)
-        buttonClearFilter.width = "min-content"
-        buttonClearFilter.maxWidth = "20px"
-        buttonClearFilter.addThemeVariants(ButtonVariant.LUMO_PRIMARY)
 
         layoutColumn4.setHeightFull()
         layoutRow3.setFlexGrow(1.0, layoutColumn4)
@@ -191,8 +174,6 @@ class BuildView(
         footerRow.setAlignSelf(FlexComponent.Alignment.CENTER, loggingTextArea)
 
         content?.add(layoutRow)
-        layoutRow.add(textField)
-        layoutRow.add(buttonClearFilter)
         content?.add(layoutRow2)
         layoutRow2.add(leftColumn)
         leftColumn.add(viewModel.buildViewGrid)

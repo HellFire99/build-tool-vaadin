@@ -18,10 +18,18 @@
     font-size: 15px;
 }
 
-vaadin-app-layout::part(navbar) {
-  background-color: #E7F2FE;
+h1 {
+  color: #333652;
 }
 
-h1 {
-  color: #61a3fa;
+.otherHover:hover{
+    background-color: #F8CF2C;
+}
+
+.otherHover::part(link){
+    color: #F8CF2C;
+}
+
+.otherHover::part(link):hover{
+    color: #333652;
 }

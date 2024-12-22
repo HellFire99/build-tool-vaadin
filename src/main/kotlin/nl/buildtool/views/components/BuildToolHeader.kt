@@ -9,6 +9,7 @@ class BuildToolHeader(
     prefixComponent: Component
 ) : SideNavItem(header, view, prefixComponent) {
     init {
-        style.setColor("#2a72e1")
+        style.setColor("#F8CF2C")
+        className = "otherHover"
     }
 }

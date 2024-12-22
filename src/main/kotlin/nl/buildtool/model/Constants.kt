@@ -70,7 +70,7 @@ const val MESSAGE_RESET_POMS = "POM version prefixes will be removed."
 const val LABEL_AUTO_DETECT_INFO = "Auto-detect branch names"
 const val LABEL_RESET_POMS = "Reset pom version"
 
-const val STYLE_COLOR_BACKGROUND = "#E7F2FE"
+const val STYLE_COLOR_BACKGROUND = "#333652"
 
 enum class GitCommand(val command: String) {
     SHOW_CURRENT_BRANCH("git branch --show-current"),

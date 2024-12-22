@@ -46,7 +46,7 @@ class LoggingService : InitializingBean {
         loggingTextArea.isClearButtonVisible = true
         loggingTextArea.isReadOnly = true
         loggingTextArea.style["flex-grow"] = "1"
-        loggingTextArea.height = "100%"
+        loggingTextArea.maxHeight = "calc(100vh - 665px)"
         this.loggingTextArea = loggingTextArea
         this.ui = UI.getCurrent()
         return loggingTextArea
