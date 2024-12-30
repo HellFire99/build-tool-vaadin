@@ -5,6 +5,7 @@ import com.vaadin.flow.component.dependency.NpmPackage
 import com.vaadin.flow.component.page.AppShellConfigurator
 import com.vaadin.flow.component.page.Push
 import com.vaadin.flow.server.AppShellSettings
+import com.vaadin.flow.theme.Theme
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
 
@@ -13,6 +14,7 @@ import org.springframework.boot.runApplication
 @NpmPackage(value = "line-awesome", version = "1.3.0")
 @CssImport("./styles/build-tool.css")
 @Push
+@Theme(value = "build-tool3")
 class VaadinBuildToolApplication : AppShellConfigurator {
     @Override
     override fun configurePage(settings: AppShellSettings) {

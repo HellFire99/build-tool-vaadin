@@ -3,3 +3,22 @@
 @import url('./views/utils-view.css');
 @import url('./views/dependencies-view.css');
 
+.smaller-font{
+    font-size: 15px;
+}
+
+h1 {
+  color: #333652;
+}
+
+.otherHover:hover{
+    background-color: #F8CF2C;
+}
+
+.otherHover::part(link){
+    color: #F8CF2C;
+}
+
+.otherHover::part(link):hover{
+    color: #333652;
+}

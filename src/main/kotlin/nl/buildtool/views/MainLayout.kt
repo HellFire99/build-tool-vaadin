@@ -51,8 +51,6 @@ class MainLayout : AppLayout() {
         headerDiv.add(image)
         headerDiv.addClassNames("padding-10")
         headerDiv.style.set("background-color", STYLE_COLOR_BACKGROUND)
-        // Test
-
         val header = Header(headerDiv)
 
         val scroller = Scroller(createNavigation())
