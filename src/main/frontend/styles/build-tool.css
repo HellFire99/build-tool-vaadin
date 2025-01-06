@@ -1,0 +1,24 @@
+@import url('../themes/build-tool3/main-layout.css');
+@import url('../themes/build-tool3/views/build-view.css');
+@import url('../themes/build-tool3/views/utils-view.css');
+@import url('../themes/build-tool3/views/dependencies-view.css');
+
+.smaller-font{
+    font-size: 15px;
+}
+
+h1 {
+  color: #333652;
+}
+
+.otherHover:hover{
+    background-color: #F8CF2C;
+}
+
+.otherHover::part(link){
+    color: #F8CF2C;
+}
+
+.otherHover::part(link):hover{
+    color: #333652;
+}
