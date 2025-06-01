@@ -172,7 +172,12 @@ object PomFileConverter {
         val transformer = transformerFactory.newTransformer()
         val source = DOMSource(pomDocument)
         val result = StreamResult(pomFile)
-        transformer.transform(source, result)
+        try {
+            transformer.transform(source, result)
+        } catch (e: Exception) {
+            logger.error(e.message, e)
+        }
+
         logEvent(" --> POM file Created: $pomFile")
     }
 }

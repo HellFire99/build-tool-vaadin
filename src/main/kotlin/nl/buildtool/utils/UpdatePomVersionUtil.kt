@@ -133,16 +133,28 @@ class UpdatePomVersionUtil {
             }
         }
 
+        val savePomFiles = mutableListOf<PomFile>()
         teUpdatenPomFiles.forEach { pomFile ->
             val myJiraNr = jiraNr ?: determineJiraNrByBranchName(pomFile)
             myJiraNr?.let {
-                updatePomVersie(pomFile, it)
+                updatePomVersie(pomFile, it, savePomFiles)
             }
         }
+        writePomFiles(savePomFiles)
+
         logEvent("done: ${stopwatch.stop().elapsed()}ms ")
 
         // trigger reload when poms have been updated and reset reloadTrigger
         doReloadPomList(teUpdatenPomFiles)
+    }
+
+    private fun writePomFiles(savePomFiles: MutableList<PomFile>) {
+        savePomFiles.forEach {
+            writeXml(
+                pomFile = it.file,
+                pomDocument = it.pomDocument
+            )
+        }
     }
 
     private fun determineJiraNrByBranchName(pomFile: PomFile): String? {
@@ -164,7 +176,11 @@ class UpdatePomVersionUtil {
         }
     }
 
-    private fun updatePomVersie(pomFile: PomFile, gewenstePomVersionPrefix: String) {
+    private fun updatePomVersie(
+        pomFile: PomFile,
+        gewenstePomVersionPrefix: String,
+        writePomFiles: MutableList<PomFile>
+    ) {
         // Begint de pom.project.version met het gewensteJiraNr ?
         val pomVersion = getPomVersion(pomFile.pomDocument)
 
@@ -175,7 +191,10 @@ class UpdatePomVersionUtil {
                 pomDocument = pomFile.pomDocument,
                 gewenstePomVersionPrefix = gewenstePomVersionPrefix
             )
-            writeXml(pomFile.file, pomFile.pomDocument)
+//            writeXml(pomFile.file, pomFile.pomDocument)
+
+            writePomFiles.add(pomFile)
+
             pomFile.triggerReload = true
         }
     }
